@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: [Publish]
+    types: [completed]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_branch, 'v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: refs/tags/${{ github.event.workflow_run.head_branch }}
+
+      - name: Generate release notes
+        id: notes
+        env:
+          TAG: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          PREV_TAG=$(git tag --sort=-version:refname | grep -v "^${TAG}$" | head -n1)
+          if [ -n "$PREV_TAG" ]; then
+            NOTES=$(git log --pretty=format:"- %s" "${PREV_TAG}..${TAG}")
+          else
+            NOTES=$(git log --pretty=format:"- %s" "${TAG}")
+          fi
+          {
+            echo "body<<EOF"
+            echo "$NOTES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          PRERELEASE=""
+          if [[ "$TAG" == *-* ]]; then
+            PRERELEASE="--prerelease"
+          fi
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes "${{ steps.notes.outputs.body }}" \
+            $PRERELEASE
