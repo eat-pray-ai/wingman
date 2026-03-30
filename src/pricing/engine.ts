@@ -1,5 +1,10 @@
 import type { ModelPricing, PricingEngine, UsageRecord } from "../types.js";
-import { fetchModelPricing, normalizeModelId } from "./models-dev.js";
+import {
+  fetchModelFamilies,
+  fetchModelPricing,
+  modelLab,
+  normalizeModelId,
+} from "./models-dev.js";
 
 /**
  * Create a PricingEngine that resolves model pricing using:
@@ -13,6 +18,7 @@ export async function createPricingEngine(
   overrides?: ModelPricing[],
 ): Promise<PricingEngine> {
   const catalog = await fetchModelPricing();
+  const families = await fetchModelFamilies();
 
   // Index overrides by "modelId::provider" for fast exact lookup
   const overrideMap = new Map<string, ModelPricing>();
@@ -24,6 +30,8 @@ export async function createPricingEngine(
 
   // Build a normalized-id index for fuzzy fallback
   const normalizedIndex = new Map<string, ModelPricing[]>();
+  // Build a family index: family → pricing entries from all models in that family
+  const familyIndex = new Map<string, ModelPricing[]>();
   for (const [modelId, pricings] of catalog) {
     const key = normalizeModelId(modelId);
     const existing = normalizedIndex.get(key);
@@ -31,6 +39,16 @@ export async function createPricingEngine(
       existing.push(...pricings);
     } else {
       normalizedIndex.set(key, [...pricings]);
+    }
+
+    const fam = families.get(modelId);
+    if (fam) {
+      const famExisting = familyIndex.get(fam);
+      if (famExisting) {
+        famExisting.push(...pricings);
+      } else {
+        familyIndex.set(fam, [...pricings]);
+      }
     }
   }
 
@@ -48,10 +66,15 @@ export async function createPricingEngine(
       if (match) return match;
     }
 
-    // 3. Exact modelId match — any provider
+    // Derive official provider from the model's family field
+    const family = families.get(modelId) ?? modelId;
+    const official = modelLab(family).toLowerCase();
+
+    // 3. Exact modelId match — prefer official provider (e.g. "anthropic" for claude)
     if (exactEntries && exactEntries.length > 0) {
-      // Prefer the provider match if available, otherwise take the first
-      return exactEntries[0];
+      const match = exactEntries.find((p) => p.provider === official);
+      if (match) return match;
+      // Don't fall back to first entry yet — fuzzy match may find the official provider
     }
 
     // 4. Fuzzy match using normalized model ID
@@ -62,10 +85,27 @@ export async function createPricingEngine(
         const match = fuzzyEntries.find((p) => p.provider === provider);
         if (match) return match;
       }
-      return fuzzyEntries[0];
+      const officialMatch = fuzzyEntries.find((p) => p.provider === official);
+      if (officialMatch) return officialMatch;
+      // Don't fall back to first entry yet — family match may find official provider
     }
 
-    // 5. Not found
+    // 5. Family match — find official provider among all models sharing the same family
+    const familyEntries = familyIndex.get(family);
+    if (familyEntries && familyEntries.length > 0) {
+      const officialMatch = familyEntries.find((p) => p.provider === official);
+      if (officialMatch) return officialMatch;
+    }
+
+    // 6. Fall back to best available non-official entry
+    if (fuzzyEntries && fuzzyEntries.length > 0) {
+      return fuzzyEntries[0];
+    }
+    if (exactEntries && exactEntries.length > 0) {
+      return exactEntries[0];
+    }
+
+    // 7. Not found
     return null;
   }
 

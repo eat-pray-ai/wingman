@@ -2,6 +2,6 @@
 node_modules/
 dist/
 docs/superpowers/
-/wingman.svg
+/wingman*.svg
 /resume.yaml
 .claude/

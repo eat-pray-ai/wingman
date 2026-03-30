@@ -192,6 +192,36 @@ export async function fetchModelPricing(): Promise<Map<string, ModelPricing[]>> 
 }
 
 /**
+ * Fetch model family mapping from models.dev (reuses same 24h disk cache).
+ *
+ * Returns a Map keyed by modelId → family string (e.g. "claude-sonnet-4-5" → "claude").
+ * Uses the `family` field from the API when available, falls back to modelId itself.
+ */
+export async function fetchModelFamilies(): Promise<Map<string, string>> {
+  let data = await readCache();
+  if (!data) {
+    data = await fetchFromApi();
+    await writeCache(data);
+  }
+
+  const result = new Map<string, string>();
+
+  for (const providerData of Object.values(data)) {
+    const models = providerData?.models;
+    if (!models || typeof models !== "object") continue;
+
+    for (const [modelId, model] of Object.entries(models)) {
+      if (result.has(modelId)) continue;
+      const raw = model as Record<string, unknown>;
+      const family = typeof raw.family === "string" ? raw.family : modelId;
+      result.set(modelId, family);
+    }
+  }
+
+  return result;
+}
+
+/**
  * Fetch model metadata from models.dev (reuses same 24h disk cache).
  *
  * Returns a Map keyed by model ID. Uses the same normalized-ID fallback

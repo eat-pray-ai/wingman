@@ -36,6 +36,7 @@ program
       since = new Date(opts.since + "T00:00:00");
     } else {
       since = new Date(until.getTime() - opts.days * 24 * 60 * 60 * 1000);
+      since.setHours(0, 0, 0, 0);
     }
 
     const theme = getTheme(opts.theme);
@@ -129,6 +130,7 @@ program
       since = new Date(opts.since + "T00:00:00");
     } else {
       since = new Date(until.getTime() - opts.days * 24 * 60 * 60 * 1000);
+      since.setHours(0, 0, 0, 0);
     }
 
     const agentFilter = opts.agents
