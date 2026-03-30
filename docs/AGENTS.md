@@ -90,6 +90,24 @@ import type { AgentAdapter, AgentConfig, UsageRecord } from "../types.js";
 
 ---
 
+## Git Conventions
+
+### Commits — Gitmoji
+
+Commit messages use [gitmoji](https://gitmoji.dev/) `:shortcode:` prefixes. Commit directly with `git commit` — do **not** use the interactive `gitmoji -c` (that's for human use).
+
+```bash
+git commit -m ":sparkles: Add new feature"
+git commit -m ":bug: Fix off-by-one in aggregator"
+git commit -m ":memo: Update AGENTS.md"
+```
+
+Common shortcodes: `:sparkles:` new features · `:bug:` bug fixes · `:recycle:` refactor · `:white_check_mark:` tests · `:memo:` docs · `:heavy_plus_sign:`/`:heavy_minus_sign:` deps · `:wrench:` config · `:art:` structure/format · `:tada:` init · `:fire:` remove code/files
+
+Run `gitmoji list` for the full catalog.
+
+---
+
 ## Architecture
 
 ### Pipeline
