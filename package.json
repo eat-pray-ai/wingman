@@ -25,6 +25,14 @@
   ],
   "author": "eat-pray-ai",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eat-pray-ai/wingman.git"
+  },
+  "homepage": "https://github.com/eat-pray-ai/wingman",
+  "bugs": {
+    "url": "https://github.com/eat-pray-ai/wingman/issues"
+  },
   "dependencies": {
     "better-sqlite3": "^12.8.0",
     "bootstrap-icons": "^1.13.1",
