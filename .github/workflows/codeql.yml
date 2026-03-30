@@ -13,13 +13,30 @@ name: "CodeQL Advanced"
 
 on:
   push:
-    branches: [ "main" ]
-    tags-ignore:
-      - '*'
+    branches: [main]
+    tags-ignore: ["*"]
+    paths:
+      - "src/**"
+      - "bin/**"
+      - "scripts/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
+      - "tsdown.config.ts"
+      - ".github/**/*.yml"
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
+    paths:
+      - "src/**"
+      - "bin/**"
+      - "scripts/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
+      - "tsdown.config.ts"
+      - ".github/**/*.yml"
   schedule:
-    - cron: '25 7 * * 3'
+    - cron: "25 7 * * 3"
 
 jobs:
   analyze:
