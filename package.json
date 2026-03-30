@@ -1,0 +1,43 @@
+{
+  "name": "@eat-pray-ai/wingman",
+  "version": "0.1.0",
+  "description": "Showcase your AI pair usage — SVG cards, resumes, and more",
+  "type": "module",
+  "bin": {
+    "wingman": "./dist/bin/wingman.mjs"
+  },
+  "scripts": {
+    "dev": "tsx src/cli.ts",
+    "build": "tsdown",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "demo": "tsx scripts/generate-demo.ts"
+  },
+  "keywords": [
+    "ai",
+    "cli",
+    "stats",
+    "svg",
+    "claude",
+    "opencode",
+    "gemini",
+    "codex"
+  ],
+  "author": "eat-pray-ai",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^12.8.0",
+    "bootstrap-icons": "^1.13.1",
+    "commander": "^14.0.3",
+    "jsonc-parser": "^3.3.0",
+    "smol-toml": "^1.3.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^25.5.0",
+    "tsdown": "^0.21.7",
+    "tsx": "^4.0.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  }
+}

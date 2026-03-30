@@ -1,0 +1,7 @@
+.superpowers/
+node_modules/
+dist/
+docs/superpowers/
+/wingman.svg
+/resume.yaml
+.claude/
