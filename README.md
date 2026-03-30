@@ -12,8 +12,8 @@ Showcase your AI pair usage — SVG cards, resumes, and more.
     <th align="center">Resume (<a href="docs/wingman.pdf">PDF</a>)</th>
   </tr>
   <tr>
-    <td align="left">npx @eat-pray-ai/wingman card</td>
-    <td align="left">npx @eat-pray-ai/wingman resume</td>
+    <td align="left"><code>npx @eat-pray-ai/wingman card</code></td>
+    <td align="left"><code>npx @eat-pray-ai/wingman resume</code></td>
   </tr>
   <tr>
     <td align="center"><img src="docs/wingman.svg" width="400" alt="SVG Card"/></td>
