@@ -7,7 +7,7 @@ Resolves model costs and metadata via the [models.dev](https://models.dev) API t
 | File | Purpose |
 |---|---|
 | `engine.ts` | `createPricingEngine()` — async factory returning a `PricingEngine` with `resolve()` and `calculateCost()` |
-| `models-dev.ts` | `fetchModelPricing()` — fetches pricing data; `fetchModelInfo()` — fetches model metadata (`ModelInfo`); 24h disk cache at `~/.wingman/cache/` |
+| `models-dev.ts` | `fetchModelPricing()` — fetches pricing data; `fetchModelInfo()` — fetches model metadata (`ModelInfo`); 24h disk cache at `~/.cache/wingman/` |
 
 ## Key Exports from `models-dev.ts`
 
