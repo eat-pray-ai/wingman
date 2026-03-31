@@ -25,8 +25,10 @@ interface RawRequest {
   sessionId: string;
 }
 
+/** Normalize model IDs from different sources to a common key.
+ *  Session JSON uses "copilot/gpt-4.1", SQLite keys use "copilot-gpt-4o". */
 function normalizeModelId(raw: string): string {
-  return raw.replace(/^copilot\//, "");
+  return raw.replace(/^copilot[\/-]/, "");
 }
 
 function scanChatSessions(since: Date, until: Date): RawRequest[] {
@@ -45,8 +47,9 @@ function scanChatSessions(since: Date, until: Date): RawRequest[] {
 
           if (!Array.isArray(session.requests)) continue;
           for (const req of session.requests) {
+            if (!req.timestamp) continue;
             const ts = new Date(req.timestamp);
-            if (ts < since || ts >= until) continue;
+            if (isNaN(ts.getTime()) || ts < since || ts >= until) continue;
 
             const rawModelId = req.modelId ?? fallbackModel;
             if (!rawModelId) continue;
@@ -78,8 +81,13 @@ function scanChatSessions(since: Date, until: Date): RawRequest[] {
   return requests;
 }
 
-function readGlobalTokenStats(): Map<string, number> {
-  const stats = new Map<string, number>();
+interface GlobalModelStats {
+  tokens: number;
+  requests: number;
+}
+
+function readGlobalTokenStats(): Map<string, GlobalModelStats> {
+  const stats = new Map<string, GlobalModelStats>();
   const dbPath = join(GLOBAL_STORAGE, "state.vscdb");
   if (!existsSync(dbPath)) return stats;
 
@@ -88,21 +96,30 @@ function readGlobalTokenStats(): Map<string, number> {
     try {
       const rows = db.prepare("SELECT key, value FROM ItemTable WHERE key LIKE 'languageModelStats.%'").all() as { key: string; value: string }[];
       for (const row of rows) {
-        const model = row.key.replace(/^languageModelStats\./, "").replace(/^copilot-/, "");
+        const model = normalizeModelId(row.key.replace(/^languageModelStats\./, ""));
         try {
           const data = JSON.parse(row.value);
           let totalTokens = 0;
+          let totalRequests = 0;
+          // Extension-level and participant-level counts are additive (not nested).
+          // Some models only have participant counts, others only extension counts.
           if (Array.isArray(data.extensions)) {
             for (const ext of data.extensions) {
               totalTokens += ext.tokenCount ?? 0;
+              totalRequests += ext.requestCount ?? 0;
               if (Array.isArray(ext.participants)) {
                 for (const p of ext.participants) {
                   totalTokens += p.tokenCount ?? 0;
+                  totalRequests += p.requestCount ?? 0;
                 }
               }
             }
           }
-          stats.set(model, (stats.get(model) ?? 0) + totalTokens);
+          const existing = stats.get(model);
+          stats.set(model, {
+            tokens: (existing?.tokens ?? 0) + totalTokens,
+            requests: (existing?.requests ?? 0) + totalRequests,
+          });
         } catch { /* skip malformed JSON */ }
       }
     } finally {
@@ -127,16 +144,14 @@ export default {
       const rawRequests = scanChatSessions(since, until);
       const globalStats = readGlobalTokenStats();
 
-      // Pre-compute request counts per model for token distribution
-      const modelRequestCounts = new Map<string, number>();
+      // Distribute global all-time tokens evenly across all-time requests.
+      // Only in-window requests get emitted, but the per-request average
+      // uses the all-time denominator so totals stay proportional.
       for (const req of rawRequests) {
-        modelRequestCounts.set(req.model, (modelRequestCounts.get(req.model) ?? 0) + 1);
-      }
-
-      for (const req of rawRequests) {
-        const globalTokens = globalStats.get(req.model) ?? 0;
-        const totalRequests = modelRequestCounts.get(req.model) ?? 1;
-        const perRequestTokens = Math.round(globalTokens / totalRequests);
+        const stats = globalStats.get(req.model);
+        const perRequestTokens = stats && stats.requests > 0
+          ? Math.round(stats.tokens / stats.requests)
+          : 0;
 
         records.push({
           agent: "github-copilot",

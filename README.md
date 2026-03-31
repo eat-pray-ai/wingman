@@ -29,7 +29,8 @@ Showcase your AI pair usage — SVG cards, resumes, and more.
 | **opencode**    | `~/.local/share/opencode/opencode.db`  | SQLite |
 | **Gemini CLI**  | `~/.gemini/tmp/*/chats/session-*.json` | JSON   |
 | **Codex**       | `~/.codex/state_5.sqlite`              | SQLite |
-| **MORE**        | Coming soon!                           | TBD    |
+| **GitHub Copilot** | VS Code `workspaceStorage/` + `globalStorage/state.vscdb` | JSON + SQLite |
+| **MORE**           | Coming soon!                           | TBD    |
 
 ## Quick Start
 

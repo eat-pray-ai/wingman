@@ -4,8 +4,9 @@ import claudeCode from "./claude-code.js";
 import opencode from "./opencode.js";
 import geminiCli from "./gemini-cli.js";
 import codex from "./codex.js";
+import githubCopilot from "./github-copilot.js";
 
-const adapters: AgentAdapter[] = [claudeCode, opencode, geminiCli, codex];
+const adapters: AgentAdapter[] = [claudeCode, opencode, geminiCli, codex, githubCopilot];
 
 export function getAllAdapters(): AgentAdapter[] {
   return adapters;

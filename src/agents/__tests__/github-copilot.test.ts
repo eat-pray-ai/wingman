@@ -217,9 +217,10 @@ describe("github-copilot adapter", () => {
       const records = await adapter.collect(since, until);
 
       expect(records).toHaveLength(2);
-      // Total tokens: 5000 + 3000 = 8000, distributed across 2 requests = 4000 each
-      expect(records[0].tokens.output).toBe(4000);
-      expect(records[1].tokens.output).toBe(4000);
+      // Total tokens: 5000 + 3000 = 8000, total requests: 10 + 5 = 15 (all-time from global stats)
+      // Per-request average: 8000 / 15 ≈ 533
+      expect(records[0].tokens.output).toBe(Math.round(8000 / 15));
+      expect(records[1].tokens.output).toBe(Math.round(8000 / 15));
       expect(records[0].tokens.input).toBe(0);
     });
   });
