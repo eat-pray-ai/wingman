@@ -23,12 +23,83 @@ interface RawRequest {
   model: string;
   timestamp: Date;
   sessionId: string;
+  inputTokens: number;
+  outputTokens: number;
 }
 
 /** Normalize model IDs from different sources to a common key.
  *  Session JSON uses "copilot/gpt-4.1", SQLite keys use "copilot-gpt-4o". */
 function normalizeModelId(raw: string): string {
   return raw.replace(/^copilot[\/-]/, "");
+}
+
+/** Parse old-format .json session files (VS Code < 1.100). No per-request token data. */
+function parseJsonSession(content: string, fileName: string, since: Date, until: Date): RawRequest[] {
+  const session = JSON.parse(content);
+  const sessionId: string = session.sessionId ?? fileName.replace(/\.json$/, "");
+  const fallbackModel: string | undefined = session.selectedModel?.metadata?.id;
+  const results: RawRequest[] = [];
+
+  if (!Array.isArray(session.requests)) return results;
+  for (const req of session.requests) {
+    if (!req.timestamp) continue;
+    const ts = new Date(req.timestamp);
+    if (isNaN(ts.getTime()) || ts < since || ts >= until) continue;
+
+    const rawModelId = req.modelId ?? fallbackModel;
+    if (!rawModelId) continue;
+
+    const usage = req.result?.usage;
+    results.push({
+      model: normalizeModelId(rawModelId),
+      timestamp: ts,
+      sessionId,
+      inputTokens: usage?.promptTokens ?? 0,
+      outputTokens: usage?.completionTokens ?? 0,
+    });
+  }
+  return results;
+}
+
+/** Parse new-format .jsonl session files (VS Code >= 1.100).
+ *  These are newline-delimited JSON with kind markers:
+ *  kind=0: session init (has sessionId, selectedModel)
+ *  kind=2 with k=["requests"]: array of request objects with usage data */
+function parseJsonlSession(content: string, fileName: string, since: Date, until: Date): RawRequest[] {
+  const results: RawRequest[] = [];
+  let sessionId = fileName.replace(/\.jsonl$/, "");
+  let fallbackModel: string | undefined;
+
+  for (const line of content.split("\n")) {
+    if (!line.trim()) continue;
+    try {
+      const entry = JSON.parse(line);
+      if (entry.kind === 0) {
+        sessionId = entry.v?.sessionId ?? sessionId;
+        fallbackModel = entry.v?.inputState?.selectedModel?.metadata?.id;
+      }
+      if (entry.kind === 2 && Array.isArray(entry.k) && entry.k.includes("requests")) {
+        for (const req of entry.v ?? []) {
+          if (!req.timestamp) continue;
+          const ts = new Date(req.timestamp);
+          if (isNaN(ts.getTime()) || ts < since || ts >= until) continue;
+
+          const rawModelId = req.modelId ?? fallbackModel;
+          if (!rawModelId) continue;
+
+          const usage = req.result?.usage;
+          results.push({
+            model: normalizeModelId(rawModelId),
+            timestamp: ts,
+            sessionId,
+            inputTokens: usage?.promptTokens ?? 0,
+            outputTokens: usage?.completionTokens ?? 0,
+          });
+        }
+      }
+    } catch { /* skip malformed lines */ }
+  }
+  return results;
 }
 
 function scanChatSessions(since: Date, until: Date): RawRequest[] {
@@ -38,34 +109,22 @@ function scanChatSessions(since: Date, until: Date): RawRequest[] {
     if (!existsSync(dir)) return;
     try {
       for (const entry of readdirSync(dir, { withFileTypes: true })) {
-        if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
+        if (!entry.isFile()) continue;
         try {
-          const content = readFileSync(join(dir, entry.name), "utf-8");
-          const session = JSON.parse(content);
-          const sessionId: string = session.sessionId ?? entry.name.replace(/\.json$/, "");
-          const fallbackModel: string | undefined = session.selectedModel?.metadata?.id;
+          const filePath = join(dir, entry.name);
+          const content = readFileSync(filePath, "utf-8");
 
-          if (!Array.isArray(session.requests)) continue;
-          for (const req of session.requests) {
-            if (!req.timestamp) continue;
-            const ts = new Date(req.timestamp);
-            if (isNaN(ts.getTime()) || ts < since || ts >= until) continue;
-
-            const rawModelId = req.modelId ?? fallbackModel;
-            if (!rawModelId) continue;
-
-            requests.push({
-              model: normalizeModelId(rawModelId),
-              timestamp: ts,
-              sessionId,
-            });
+          if (entry.name.endsWith(".jsonl")) {
+            requests.push(...parseJsonlSession(content, entry.name, since, until));
+          } else if (entry.name.endsWith(".json")) {
+            requests.push(...parseJsonSession(content, entry.name, since, until));
           }
         } catch { /* skip unreadable session files */ }
       }
     } catch { /* skip unreadable directories */ }
   };
 
-  // Scan workspaceStorage/<hash>/chatSessions/*.json
+  // Scan workspaceStorage/<hash>/chatSessions/*.json and *.jsonl
   if (existsSync(WORKSPACE_STORAGE)) {
     try {
       for (const wsEntry of readdirSync(WORKSPACE_STORAGE, { withFileTypes: true })) {
@@ -75,7 +134,7 @@ function scanChatSessions(since: Date, until: Date): RawRequest[] {
     } catch { /* ignore */ }
   }
 
-  // Scan globalStorage/emptyWindowChatSessions/*.json
+  // Scan globalStorage/emptyWindowChatSessions
   scanDir(join(GLOBAL_STORAGE, "emptyWindowChatSessions"));
 
   return requests;
@@ -144,21 +203,24 @@ export default {
       const rawRequests = scanChatSessions(since, until);
       const globalStats = readGlobalTokenStats();
 
-      // Distribute global all-time tokens evenly across all-time requests.
-      // Only in-window requests get emitted, but the per-request average
-      // uses the all-time denominator so totals stay proportional.
       for (const req of rawRequests) {
-        const stats = globalStats.get(req.model);
-        const perRequestTokens = stats && stats.requests > 0
-          ? Math.round(stats.tokens / stats.requests)
-          : 0;
+        let inputTokens = req.inputTokens;
+        let outputTokens = req.outputTokens;
+
+        // Fall back to global stats average only when session has no token data
+        if (inputTokens === 0 && outputTokens === 0) {
+          const stats = globalStats.get(req.model);
+          if (stats && stats.requests > 0) {
+            outputTokens = Math.round(stats.tokens / stats.requests);
+          }
+        }
 
         records.push({
           agent: "github-copilot",
           model: req.model,
           provider: "copilot",
           timestamp: req.timestamp,
-          tokens: { input: 0, output: perRequestTokens },
+          tokens: { input: inputTokens, output: outputTokens },
           sessionId: req.sessionId,
         });
       }

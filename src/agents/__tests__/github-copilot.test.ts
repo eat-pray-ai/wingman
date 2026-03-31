@@ -60,7 +60,7 @@ describe("github-copilot adapter", () => {
     const inRangeTs2 = new Date("2025-01-20T15:00:00Z").getTime(); // 1737385200000
     const outOfRangeTs = new Date("2024-06-01T00:00:00Z").getTime();
 
-    it("parses requests from chatSessions JSON files", async () => {
+    it("parses requests from old-format .json session files", async () => {
       const sessionData = {
         sessionId: "sess-abc-123",
         selectedModel: { metadata: { id: "gpt-4o" } },
@@ -73,10 +73,6 @@ describe("github-copilot adapter", () => {
 
       vi.mocked(existsSync).mockReturnValue(true);
 
-      // readdirSync calls:
-      // 1st: workspaceStorage dirs → one hash dir
-      // 2nd: chatSessions in that hash dir → one session file
-      // 3rd: globalStorage/emptyWindowChatSessions → empty
       vi.mocked(readdirSync).mockImplementation(((path: string) => {
         if (path.includes("workspaceStorage") && !path.includes("chatSessions")) {
           return [{ name: "abc123hash", isDirectory: () => true }] as unknown[];
@@ -174,7 +170,106 @@ describe("github-copilot adapter", () => {
       expect(records).toHaveLength(0);
     });
 
-    it("distributes global token stats proportionally across requests", async () => {
+    it("uses per-request usage data from .json when available", async () => {
+      const sessionData = {
+        sessionId: "sess-usage-001",
+        selectedModel: { metadata: { id: "gpt-4o" } },
+        requests: [
+          {
+            timestamp: inRangeTs1,
+            modelId: "copilot/gpt-4o",
+            result: { usage: { promptTokens: 5000, completionTokens: 800 } },
+          },
+        ],
+      };
+
+      vi.mocked(existsSync).mockReturnValue(true);
+
+      vi.mocked(readdirSync).mockImplementation(((path: string) => {
+        if (path.includes("workspaceStorage") && !path.includes("chatSessions")) {
+          return [{ name: "hashUsage", isDirectory: () => true }] as unknown[];
+        }
+        if (path.includes("hashUsage") && path.includes("chatSessions")) {
+          return [{ name: "sess-usage-001.json", isFile: () => true }];
+        }
+        return [];
+      }) as typeof readdirSync);
+
+      vi.mocked(readFileSync).mockReturnValue(JSON.stringify(sessionData));
+
+      const { default: adapter } = await import("../github-copilot.js");
+      const records = await adapter.collect(since, until);
+
+      expect(records).toHaveLength(1);
+      expect(records[0].tokens.input).toBe(5000);
+      expect(records[0].tokens.output).toBe(800);
+    });
+
+    it("parses .jsonl session files with real token data", async () => {
+      const jsonlContent = [
+        JSON.stringify({
+          kind: 0,
+          v: {
+            sessionId: "sess-jsonl-001",
+            inputState: {
+              selectedModel: { metadata: { id: "gpt-5.2" } },
+            },
+          },
+        }),
+        JSON.stringify({
+          kind: 2,
+          k: ["requests"],
+          v: [
+            {
+              timestamp: inRangeTs1,
+              modelId: "copilot/gpt-5.2",
+              result: { usage: { promptTokens: 18000, completionTokens: 400 } },
+            },
+            {
+              timestamp: inRangeTs2,
+              modelId: "copilot/gpt-5.2",
+              result: { usage: { promptTokens: 20000, completionTokens: 600 } },
+            },
+            {
+              timestamp: outOfRangeTs,
+              modelId: "copilot/gpt-5.2",
+              result: { usage: { promptTokens: 1000, completionTokens: 100 } },
+            },
+          ],
+        }),
+      ].join("\n");
+
+      vi.mocked(existsSync).mockReturnValue(true);
+
+      vi.mocked(readdirSync).mockImplementation(((path: string) => {
+        if (path.includes("workspaceStorage") && !path.includes("chatSessions")) {
+          return [{ name: "hashJsonl", isDirectory: () => true }] as unknown[];
+        }
+        if (path.includes("hashJsonl") && path.includes("chatSessions")) {
+          return [{ name: "sess-jsonl-001.jsonl", isFile: () => true }];
+        }
+        return [];
+      }) as typeof readdirSync);
+
+      vi.mocked(readFileSync).mockReturnValue(jsonlContent);
+
+      const { default: adapter } = await import("../github-copilot.js");
+      const records = await adapter.collect(since, until);
+
+      expect(records).toHaveLength(2);
+      expect(records[0]).toMatchObject({
+        agent: "github-copilot",
+        model: "gpt-5.2",
+        provider: "copilot",
+        sessionId: "sess-jsonl-001",
+        tokens: { input: 18000, output: 400 },
+      });
+      expect(records[1]).toMatchObject({
+        tokens: { input: 20000, output: 600 },
+      });
+    });
+
+    it("falls back to global stats when session has no token data", async () => {
       const sessionData = {
         sessionId: "sess-tokens-001",
         selectedModel: { metadata: { id: "gpt-4o" } },
@@ -222,6 +317,51 @@ describe("github-copilot adapter", () => {
       expect(records[0].tokens.output).toBe(Math.round(8000 / 15));
       expect(records[1].tokens.output).toBe(Math.round(8000 / 15));
       expect(records[0].tokens.input).toBe(0);
+    });
+
+    it("prefers per-request usage over global stats fallback", async () => {
+      const sessionData = {
+        sessionId: "sess-prefer-usage",
+        selectedModel: { metadata: { id: "gpt-4o" } },
+        requests: [
+          {
+            timestamp: inRangeTs1,
+            modelId: "copilot/gpt-4o",
+            result: { usage: { promptTokens: 12000, completionTokens: 500 } },
+          },
+        ],
+      };
+
+      vi.mocked(existsSync).mockReturnValue(true);
+
+      vi.mocked(readdirSync).mockImplementation(((path: string) => {
+        if (path.includes("workspaceStorage") && !path.includes("chatSessions")) {
+          return [{ name: "hashPrefer", isDirectory: () => true }] as unknown[];
+        }
+        if (path.includes("hashPrefer") && path.includes("chatSessions")) {
+          return [{ name: "sess-prefer-usage.json", isFile: () => true }];
+        }
+        return [];
+      }) as typeof readdirSync);
+
+      vi.mocked(readFileSync).mockReturnValue(JSON.stringify(sessionData));
+
+      // Global stats exist but should NOT be used when session has real data
+      dbRows = [
+        {
+          key: "languageModelStats.copilot-gpt-4o",
+          value: JSON.stringify({
+            extensions: [{ requestCount: 100, tokenCount: 99999 }],
+          }),
+        },
+      ];
+
+      const { default: adapter } = await import("../github-copilot.js");
+      const records = await adapter.collect(since, until);
+
+      expect(records).toHaveLength(1);
+      expect(records[0].tokens.input).toBe(12000);
+      expect(records[0].tokens.output).toBe(500);
     });
   });
 });
