@@ -3,11 +3,30 @@ import { escapeXml, svgCircle, svgRect, svgText } from "../../svg/components.js"
 import type { RenderContext } from "./context.js";
 import { separator, topModels } from "./helpers.js";
 
+const OTHERS_ID = "__others__";
+
 export function renderLegend(ctx: RenderContext, data: ShowcaseData, y: number): SectionResult {
   const startY = y + 8;
   const parts: string[] = [];
   const agents = data.agents.slice(0, 6);
-  const models = topModels(data, 5);
+  const top5 = topModels(data, 5);
+  const topIds = new Set(top5.map((m) => m.id));
+
+  // Check if any displayed agent has tokens in models outside the top 5
+  let hasOthers = false;
+  for (const agent of agents) {
+    for (const [modelId, stats] of Object.entries(agent.models)) {
+      if (stats.tokens > 0 && !topIds.has(modelId)) {
+        hasOthers = true;
+        break;
+      }
+    }
+    if (hasOthers) break;
+  }
+
+  const models = hasOthers
+    ? [...top5, { id: OTHERS_ID, tokens: 0, cost: 0 }]
+    : top5;
 
   const agentRowH = 22;
   const modelRowH = 22;
@@ -43,10 +62,11 @@ export function renderLegend(ctx: RenderContext, data: ShowcaseData, y: number):
     const sx = squareX + 12;
 
     for (const [modelId, stats] of Object.entries(agent.models)) {
-      const my = modelYMap.get(modelId);
+      if (stats.tokens <= 0) continue;
+      const my = modelYMap.get(modelId) ?? modelYMap.get(OTHERS_ID);
       if (my === undefined) continue;
 
-      const lineW = Math.max(1, (stats.tokens / maxPairTokens) * 8);
+      const lineW = Math.max(0.5, (stats.tokens / maxPairTokens) * 8);
       const cx = circleX - 6;
       const midX = (sx + cx) / 2;
       parts.push(
@@ -73,12 +93,15 @@ export function renderLegend(ctx: RenderContext, data: ShowcaseData, y: number):
   // Model labels + circles
   models.forEach((model, i) => {
     const cy = modelStartY + i * modelRowH + modelRowH / 2;
-    const color = ctx.modelColors[i % ctx.modelColors.length];
-    const truncId = model.id.length > 24 ? model.id.slice(0, 24) + "\u2026" : model.id;
+    const isOthers = model.id === OTHERS_ID;
+    const color = isOthers ? ctx.colors.secondary : ctx.modelColors[i % ctx.modelColors.length];
+    const label = isOthers
+      ? "Others"
+      : model.id.length > 24 ? model.id.slice(0, 24) + "\u2026" : model.id;
     parts.push(svgCircle(circleX, cy, 5, { fill: color }));
     parts.push(
-      svgText(modelTextX, cy + 4, truncId, {
-        fill: ctx.colors.primary,
+      svgText(modelTextX, cy + 4, label, {
+        fill: isOthers ? ctx.colors.secondary : ctx.colors.primary,
         size: 11,
       }),
     );
