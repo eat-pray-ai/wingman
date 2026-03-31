@@ -1,4 +1,4 @@
-import { homedir } from "node:os";
+import { homedir, platform } from "node:os";
 import { join } from "node:path";
 import { existsSync, readFileSync } from "node:fs";
 import Database from "better-sqlite3";
@@ -6,9 +6,18 @@ import { parse as parseJsonc } from "jsonc-parser";
 import type { AgentAdapter, AgentConfig, UsageRecord } from "../types.js";
 import { scanSkillDir } from "./skills.js";
 
-const DB_PATH = join(homedir(), ".local", "share", "opencode", "opencode.db");
-const CONFIG_PATH = join(homedir(), ".config", "opencode", "opencode.jsonc");
-const SKILLS_DIR = join(homedir(), ".config", "opencode", "skills");
+// opencode follows XDG conventions; on Windows it uses standard AppData dirs
+const isWin = platform() === "win32";
+const DATA_DIR = isWin
+  ? join(process.env.LOCALAPPDATA ?? join(homedir(), "AppData", "Local"), "opencode")
+  : join(homedir(), ".local", "share", "opencode");
+const CONFIG_DIR = isWin
+  ? join(process.env.APPDATA ?? join(homedir(), "AppData", "Roaming"), "opencode")
+  : join(homedir(), ".config", "opencode");
+
+const DB_PATH = join(DATA_DIR, "opencode.db");
+const CONFIG_PATH = join(CONFIG_DIR, "opencode.jsonc");
+const SKILLS_DIR = join(CONFIG_DIR, "skills");
 const SHARED_SKILLS_DIR = join(homedir(), ".agents", "skills");
 
 export default {

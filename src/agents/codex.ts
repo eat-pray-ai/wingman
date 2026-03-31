@@ -1,5 +1,5 @@
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import Database from "better-sqlite3";
 import { parse as parseToml } from "smol-toml";
@@ -19,7 +19,7 @@ function parseCodexPlugin(pluginDir: string): PluginInfo | null {
 
   try {
     const manifest = JSON.parse(readFileSync(manifestPath, "utf-8")) as Record<string, unknown>;
-    const name = (manifest.name as string) || pluginDir.split("/").pop() || "unknown";
+    const name = (manifest.name as string) || basename(pluginDir) || "unknown";
     const version = manifest.version as string | undefined;
     const info: PluginInfo = { name, version, skills: [], agents: [], commands: [], sources: [] };
 
