@@ -311,12 +311,17 @@ describe("github-copilot adapter", () => {
       const { default: adapter } = await import("../github-copilot.js");
       const records = await adapter.collect(since, until);
 
-      expect(records).toHaveLength(2);
+      // 2 session records with fallback average + 1 synthetic remainder record
+      expect(records).toHaveLength(3);
       // Total tokens: 5000 + 3000 = 8000, total requests: 10 + 5 = 15 (all-time from global stats)
       // Per-request average: 8000 / 15 ≈ 533
-      expect(records[0].tokens.output).toBe(Math.round(8000 / 15));
-      expect(records[1].tokens.output).toBe(Math.round(8000 / 15));
+      const avg = Math.round(8000 / 15);
+      expect(records[0].tokens.output).toBe(avg);
+      expect(records[1].tokens.output).toBe(avg);
       expect(records[0].tokens.input).toBe(0);
+      // Synthetic remainder: 8000 - (533 * 2) = 6934
+      expect(records[2].tokens.output).toBe(8000 - avg * 2);
+      expect(records[2].tokens.input).toBe(0);
     });
 
     it("prefers per-request usage over global stats fallback", async () => {
@@ -359,9 +364,13 @@ describe("github-copilot adapter", () => {
       const { default: adapter } = await import("../github-copilot.js");
       const records = await adapter.collect(since, until);
 
-      expect(records).toHaveLength(1);
+      // 1 session record + 1 synthetic remainder record
+      expect(records).toHaveLength(2);
       expect(records[0].tokens.input).toBe(12000);
       expect(records[0].tokens.output).toBe(500);
+      // Synthetic remainder: 99999 - (12000 + 500) = 87499
+      expect(records[1].tokens.output).toBe(99999 - 12500);
+      expect(records[1].tokens.input).toBe(0);
     });
   });
 });

@@ -203,6 +203,9 @@ export default {
       const rawRequests = scanChatSessions(since, until);
       const globalStats = readGlobalTokenStats();
 
+      // Track how many tokens we've accounted for per model from session files
+      const sessionTokensByModel = new Map<string, number>();
+
       for (const req of rawRequests) {
         let inputTokens = req.inputTokens;
         let outputTokens = req.outputTokens;
@@ -215,6 +218,11 @@ export default {
           }
         }
 
+        sessionTokensByModel.set(
+          req.model,
+          (sessionTokensByModel.get(req.model) ?? 0) + inputTokens + outputTokens,
+        );
+
         records.push({
           agent: "github-copilot",
           model: req.model,
@@ -223,6 +231,25 @@ export default {
           tokens: { input: inputTokens, output: outputTokens },
           sessionId: req.sessionId,
         });
+      }
+
+      // For models in global stats that had no session coverage or were
+      // undercounted, emit a synthetic record with the remaining tokens.
+      // Use the midpoint of the date range as the timestamp since global
+      // stats are not date-bucketed.
+      const midpoint = new Date((since.getTime() + until.getTime()) / 2);
+      for (const [model, stats] of globalStats) {
+        const sessionTokens = sessionTokensByModel.get(model) ?? 0;
+        const remainder = stats.tokens - sessionTokens;
+        if (remainder > 0) {
+          records.push({
+            agent: "github-copilot",
+            model,
+            provider: "copilot",
+            timestamp: midpoint,
+            tokens: { input: 0, output: remainder },
+          });
+        }
       }
     } catch {
       // return what we have
