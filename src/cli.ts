@@ -1,6 +1,7 @@
 import { Command } from "commander";
-import { writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { getAllAdapters } from "./agents/registry.js";
 import { createPricingEngine } from "./pricing/engine.js";
 import { aggregate } from "./aggregator.js";
@@ -8,7 +9,88 @@ import { getTheme, getAvailableThemes } from "./themes/registry.js";
 import { SECTION_NAMES } from "./themes/shared/sections.js";
 import { generateResumeYaml } from "./resume/renderer.js";
 import { fetchModelInfo } from "./pricing/models-dev.js";
-import type { UsageRecord, AgentConfig, ModelPricing } from "./types.js";
+import type { AgentAdapter, UsageRecord, AgentConfig, ShowcaseData, ModelPricing } from "./types.js";
+
+function findPackageJson(): string {
+  let dir = dirname(fileURLToPath(import.meta.url));
+  while (true) {
+    const candidate = join(dir, "package.json");
+    if (existsSync(candidate)) return candidate;
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  throw new Error("package.json not found");
+}
+
+const pkg = JSON.parse(readFileSync(findPackageJson(), "utf-8"));
+
+function parseDateRange(opts: { since?: string; until?: string; days: number }) {
+  const until = opts.until ? new Date(opts.until + "T23:59:59.999") : new Date();
+  let since: Date;
+  if (opts.since) {
+    since = new Date(opts.since + "T00:00:00");
+  } else {
+    since = new Date(until.getTime() - opts.days * 24 * 60 * 60 * 1000);
+    since.setHours(0, 0, 0, 0);
+  }
+  return { since, until };
+}
+
+async function detectAgents(agents?: string): Promise<AgentAdapter[]> {
+  const agentFilter = agents
+    ? new Set(agents.split(",").map((s) => s.trim()))
+    : null;
+
+  let adapters = getAllAdapters();
+  if (agentFilter) {
+    adapters = adapters.filter((a) => agentFilter.has(a.name));
+  }
+
+  console.log("🔍 Detecting agents...");
+  const detected: AgentAdapter[] = [];
+  for (const adapter of adapters) {
+    if (await adapter.detect()) {
+      detected.push(adapter);
+      console.log(`  ✓ ${adapter.displayName}`);
+    }
+  }
+
+  if (detected.length === 0) {
+    console.error("No AI agents detected on this machine.");
+    process.exit(1);
+  }
+
+  return detected;
+}
+
+async function collectAndAggregate(
+  detected: AgentAdapter[],
+  since: Date,
+  until: Date,
+): Promise<ShowcaseData> {
+  console.log("\n📊 Collecting usage data...");
+  const allRecords: UsageRecord[] = [];
+  const configsMap = new Map<string, { displayName: string; config: AgentConfig }>();
+  const pricingOverrides: ModelPricing[] = [];
+
+  for (const adapter of detected) {
+    try {
+      const records = await adapter.collect(since, until);
+      allRecords.push(...records);
+      const config = await adapter.config();
+      configsMap.set(adapter.name, { displayName: adapter.displayName, config });
+      console.log(`  ${adapter.displayName}: ${records.length} records`);
+    } catch (err) {
+      console.warn(`  ⚠ ${adapter.displayName}: ${(err as Error).message}`);
+    }
+  }
+
+  console.log("\n💰 Loading pricing data...");
+  const pricing = await createPricingEngine(pricingOverrides);
+
+  return aggregate(allRecords, configsMap, pricing, since, until);
+}
 
 const parseIntArg = (v: string) => parseInt(v, 10);
 const program = new Command();
@@ -16,7 +98,7 @@ const program = new Command();
 program
   .name("wingman")
   .description("Showcase your AI pair usage — SVG cards, resumes, and more")
-  .version("0.1.0");
+  .version(pkg.version);
 
 program
   .command("card")
@@ -29,15 +111,7 @@ program
   .option("--days <n>", "last N days", parseIntArg, 90)
   .option("--sections <names>", `comma-separated sections to include (${SECTION_NAMES.join(", ")})`)
   .action(async (opts) => {
-    // Snap to local-time day boundaries
-    const until = opts.until ? new Date(opts.until + "T23:59:59.999") : new Date();
-    let since: Date;
-    if (opts.since) {
-      since = new Date(opts.since + "T00:00:00");
-    } else {
-      since = new Date(until.getTime() - opts.days * 24 * 60 * 60 * 1000);
-      since.setHours(0, 0, 0, 0);
-    }
+    const { since, until } = parseDateRange(opts);
 
     const theme = getTheme(opts.theme);
     if (!theme) {
@@ -61,51 +135,10 @@ program
       }
     }
 
-    const agentFilter = opts.agents
-      ? new Set(opts.agents.split(",").map((s: string) => s.trim()))
-      : null;
-
-    let adapters = getAllAdapters();
-    if (agentFilter) {
-      adapters = adapters.filter((a) => agentFilter.has(a.name));
-    }
-
-    console.log("🔍 Detecting agents...");
-    const detected = [];
-    for (const adapter of adapters) {
-      if (await adapter.detect()) {
-        detected.push(adapter);
-        console.log(`  ✓ ${adapter.displayName}`);
-      }
-    }
-
-    if (detected.length === 0) {
-      console.error("No AI agents detected on this machine.");
-      process.exit(1);
-    }
-
-    console.log("\n📊 Collecting usage data...");
-    const allRecords: UsageRecord[] = [];
-    const configsMap = new Map<string, { displayName: string; config: AgentConfig }>();
-    const pricingOverrides: ModelPricing[] = [];
-
-    for (const adapter of detected) {
-      try {
-        const records = await adapter.collect(since, until);
-        allRecords.push(...records);
-        const config = await adapter.config();
-        configsMap.set(adapter.name, { displayName: adapter.displayName, config });
-        console.log(`  ${adapter.displayName}: ${records.length} records`);
-      } catch (err) {
-        console.warn(`  ⚠ ${adapter.displayName}: ${(err as Error).message}`);
-      }
-    }
-
-    console.log("\n💰 Loading pricing data...");
-    const pricing = await createPricingEngine(pricingOverrides);
+    const detected = await detectAgents(opts.agents);
+    const data = await collectAndAggregate(detected, since, until);
 
     console.log("🎨 Rendering SVG...");
-    const data = aggregate(allRecords, configsMap, pricing, since, until);
     const svg = theme.render(data, { sections: sectionsFilter });
 
     const outputPath = resolve(opts.output);
@@ -124,64 +157,14 @@ program
   .option("--until <date>", "end date (YYYY-MM-DD)")
   .option("--days <n>", "last N days", parseIntArg, 180)
   .action(async (opts) => {
-    const until = opts.until ? new Date(opts.until + "T23:59:59.999") : new Date();
-    let since: Date;
-    if (opts.since) {
-      since = new Date(opts.since + "T00:00:00");
-    } else {
-      since = new Date(until.getTime() - opts.days * 24 * 60 * 60 * 1000);
-      since.setHours(0, 0, 0, 0);
-    }
-
-    const agentFilter = opts.agents
-      ? new Set(opts.agents.split(",").map((s: string) => s.trim()))
-      : null;
-
-    let adapters = getAllAdapters();
-    if (agentFilter) {
-      adapters = adapters.filter((a) => agentFilter.has(a.name));
-    }
-
-    console.log("🔍 Detecting agents...");
-    const detected = [];
-    for (const adapter of adapters) {
-      if (await adapter.detect()) {
-        detected.push(adapter);
-        console.log(`  ✓ ${adapter.displayName}`);
-      }
-    }
-
-    if (detected.length === 0) {
-      console.error("No AI agents detected on this machine.");
-      process.exit(1);
-    }
-
-    console.log("\n📊 Collecting usage data...");
-    const allRecords: UsageRecord[] = [];
-    const configsMap = new Map<string, { displayName: string; config: AgentConfig }>();
-    const pricingOverrides: ModelPricing[] = [];
-
-    for (const adapter of detected) {
-      try {
-        const records = await adapter.collect(since, until);
-        allRecords.push(...records);
-        const config = await adapter.config();
-        configsMap.set(adapter.name, { displayName: adapter.displayName, config });
-        console.log(`  ${adapter.displayName}: ${records.length} records`);
-      } catch (err) {
-        console.warn(`  ⚠ ${adapter.displayName}: ${(err as Error).message}`);
-      }
-    }
-
-    console.log("\n💰 Loading pricing data...");
-    const pricing = await createPricingEngine(pricingOverrides);
+    const { since, until } = parseDateRange(opts);
+    const detected = await detectAgents(opts.agents);
+    const data = await collectAndAggregate(detected, since, until);
 
     console.log("📋 Loading model metadata...");
     const modelInfo = await fetchModelInfo();
 
     console.log("📝 Generating resume YAML...");
-    const data = aggregate(allRecords, configsMap, pricing, since, until);
-
     const yaml = generateResumeYaml(data, modelInfo, {
       name: opts.name,
       headline: opts.headline,
