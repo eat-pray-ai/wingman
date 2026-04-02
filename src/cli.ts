@@ -77,7 +77,7 @@ async function collectAndAggregate(
   for (const adapter of detected) {
     try {
       const records = await adapter.collect(since, until);
-      allRecords.push(...records);
+      for (const r of records) allRecords.push(r);
       const config = await adapter.config();
       configsMap.set(adapter.name, { displayName: adapter.displayName, config });
       console.log(`  ${adapter.displayName}: ${records.length} records`);
