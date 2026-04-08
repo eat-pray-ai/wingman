@@ -133,6 +133,28 @@ export default {
   async config(): Promise<AgentConfig> {
     const cfg: AgentConfig = { mcpServers: [], plugins: [], models: [], skills: [] };
 
+    // Collect MCP servers from ~/.claude.json (global + per-project mcpServers)
+    const mcpNames = new Set<string>();
+    try {
+      const claudeJsonPath = join(homedir(), ".claude.json");
+      if (existsSync(claudeJsonPath)) {
+        const data = JSON.parse(readFileSync(claudeJsonPath, "utf-8"));
+        // Top-level mcpServers
+        if (data.mcpServers && typeof data.mcpServers === "object") {
+          for (const name of Object.keys(data.mcpServers)) mcpNames.add(name);
+        }
+        // Per-project mcpServers
+        if (data.projects && typeof data.projects === "object") {
+          for (const proj of Object.values(data.projects) as Record<string, unknown>[]) {
+            if (proj.mcpServers && typeof proj.mcpServers === "object") {
+              for (const name of Object.keys(proj.mcpServers as object)) mcpNames.add(name);
+            }
+          }
+        }
+      }
+    } catch { /* ignore */ }
+    cfg.mcpServers = [...mcpNames];
+
     try {
       const pluginsPath = join(CLAUDE_DIR, "plugins", "installed_plugins.json");
       if (existsSync(pluginsPath)) {
