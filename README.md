@@ -97,7 +97,7 @@ wingman resume -o my-resume.yaml
 |--------------|-------|--------------------------|------------------------------|
 | `--output`   | `-o`  | `resume.yaml`            | Output file path             |
 | `--name`     |       | `Wingman`                | Resume name                  |
-| `--headline` |       | `AI pair for everything` | Resume headline              |
+| `--headline` |       | `Your AI agents, one resume` | Resume headline              |
 | `--agents`   |       | all detected             | Comma-separated agent filter |
 | `--since`    |       | 180 days ago             | Start date (YYYY-MM-DD)      |
 | `--until`    |       | today                    | End date (YYYY-MM-DD)        |
