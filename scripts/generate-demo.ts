@@ -202,7 +202,7 @@ console.log(`✅ Demo SVG saved to ${svgPath}`);
 // Generate resume YAML
 const yaml = generateResumeYaml(data, mockModels, {
   name: "Wingman",
-  headline: "AI pair for everything",
+  headline: "Your AI agents, one resume",
 });
 const yamlPath = resolve("docs/resume.yaml");
 writeFileSync(yamlPath, yaml, "utf-8");

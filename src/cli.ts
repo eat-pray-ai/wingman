@@ -150,7 +150,7 @@ program
   .command("resume")
   .description("Generate a rendercv-compatible YAML resume from AI agent usage stats")
   .option("--name <name>", "resume name", "Wingman")
-  .option("--headline <text>", "resume headline", "AI pair for everything")
+  .option("--headline <text>", "resume headline", "Your AI agents, one resume")
   .option("-o, --output <path>", "output file path", "resume.yaml")
   .option("--agents <names>", `comma-separated agent filter (${getAllAdapters().map((a) => a.name).join(", ")})`)
   .option("--since <date>", "start date (YYYY-MM-DD)")
