@@ -33,7 +33,7 @@ export function renderInventory(ctx: RenderContext, data: ShowcaseData, y: numbe
   const rowH = 26;
   let curY = startY + 28;
 
-  // ── Plugins (hierarchical: plugin → skills, agents, commands) ──
+  // ── Plugins ──
   for (const plugin of inv.plugins) {
     const label = plugin.version ? `${plugin.name} v${plugin.version}` : plugin.name;
     parts.push(svgIcon(ctx.padX, curY + 3, ICONS.puzzle, { fill: ctx.colors.blue, size: 12 }));
@@ -44,33 +44,6 @@ export function renderInventory(ctx: RenderContext, data: ShowcaseData, y: numbe
     });
     parts.push(pill.svg);
     curY += rowH;
-
-    // Helper: render a labeled row of pills with wrapping
-    const renderPillRow = (label: string, labelW: number, items: string[], prefix = "") => {
-      parts.push(
-        svgText(ctx.padX + indent, curY + 12, label, { fill: ctx.colors.muted, size: 9 }),
-      );
-      let px = ctx.padX + indent + labelW;
-      for (const item of items) {
-        const text = prefix + item;
-        const sp = svgPill(px, curY, text, { fill: ctx.colors.separator, textFill: ctx.colors.secondary });
-        if (px + sp.width > maxX && px > ctx.padX + indent + labelW) {
-          curY += rowH;
-          px = ctx.padX + indent + labelW;
-          const sp2 = svgPill(px, curY, text, { fill: ctx.colors.separator, textFill: ctx.colors.secondary });
-          parts.push(sp2.svg);
-          px += sp2.width + pillGap;
-        } else {
-          parts.push(sp.svg);
-          px += sp.width + pillGap;
-        }
-      }
-      curY += rowH;
-    };
-
-    if (plugin.skills.length > 0) renderPillRow("skills", 36, plugin.skills);
-    if (plugin.agents.length > 0) renderPillRow("agents", 40, plugin.agents);
-    if (plugin.commands.length > 0) renderPillRow("cmds", 32, plugin.commands, "/");
   }
 
   // Helper: render a section of InventoryItems with badges inside pills
