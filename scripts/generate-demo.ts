@@ -1,5 +1,5 @@
 /**
- * Generate demo SVG and resume YAML with mock data for the README.
+ * Generate demo SVG and résumé YAML with mock data for the README.
  * Usage: npx tsx scripts/generate-demo.ts
  */
 import { writeFileSync } from "node:fs";
@@ -199,11 +199,11 @@ const svgPath = resolve("docs/wingman.svg");
 writeFileSync(svgPath, svg, "utf-8");
 console.log(`✅ Demo SVG saved to ${svgPath}`);
 
-// Generate resume YAML
+// Generate résumé YAML
 const yaml = generateResumeYaml(data, mockModels, {
   name: "Wingman",
-  headline: "Your AI agents, one resume",
+  headline: "Your AI agents, one résumé",
 });
 const yamlPath = resolve("docs/resume.yaml");
 writeFileSync(yamlPath, yaml, "utf-8");
-console.log(`✅ Demo resume saved to ${yamlPath}`);
+console.log(`✅ Demo résumé saved to ${yamlPath}`);

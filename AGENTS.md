@@ -1,6 +1,6 @@
 # AGENTS.md — Wingman (`@eat-pray-ai/wingman`)
 
-TypeScript CLI that reads local AI coding-agent usage data and produces shareable SVG stat cards and rendercv-compatible YAML resumes.
+TypeScript CLI that reads local AI coding-agent usage data and produces shareable SVG stat cards and rendercv-compatible YAML résumés.
 Pipeline: Agent Adapters → `UsageRecord[]` → Aggregator → `ShowcaseData` → Renderer → SVG / YAML.
 
 ---
@@ -23,12 +23,12 @@ npm run test:watch       # vitest in watch mode
 
 ## Documentation Index
 
-| Guide | Scope |
-|---|---|
-| **[docs/AGENTS.md](docs/AGENTS.md)** | Code style, architecture, common patterns, dependencies |
+| Guide | Scope                                                    |
+|---|----------------------------------------------------------|
+| **[docs/AGENTS.md](docs/AGENTS.md)** | Code style, architecture, common patterns, dependencies  |
 | [src/AGENTS.md](src/AGENTS.md) | Source overview, module map, key types, extension points |
-| [src/agents/AGENTS.md](src/agents/AGENTS.md) | Agent adapter contract, adding new agents |
-| [src/themes/AGENTS.md](src/themes/AGENTS.md) | Theme renderer structure, section pattern |
-| [src/svg/AGENTS.md](src/svg/AGENTS.md) | SVG component primitives, opts pattern |
-| [src/pricing/AGENTS.md](src/pricing/AGENTS.md) | Pricing engine, model metadata, models.dev API |
-| [src/resume/AGENTS.md](src/resume/AGENTS.md) | Resume YAML renderer for rendercv |
+| [src/agents/AGENTS.md](src/agents/AGENTS.md) | Agent adapter contract, adding new agents                |
+| [src/themes/AGENTS.md](src/themes/AGENTS.md) | Theme renderer structure, section pattern                |
+| [src/svg/AGENTS.md](src/svg/AGENTS.md) | SVG component primitives, opts pattern                   |
+| [src/pricing/AGENTS.md](src/pricing/AGENTS.md) | Pricing engine, model metadata, models.dev API           |
+| [src/resume/AGENTS.md](src/resume/AGENTS.md) | Résumé YAML renderer for rendercv                        |

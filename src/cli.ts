@@ -97,7 +97,7 @@ const program = new Command();
 
 program
   .name("wingman")
-  .description("Showcase your AI pair usage — SVG cards, resumes, and more")
+  .description("Showcase your AI pair usage — SVG cards, résumés, and more")
   .version(pkg.version);
 
 program
@@ -148,9 +148,9 @@ program
 
 program
   .command("resume")
-  .description("Generate a rendercv-compatible YAML resume from AI agent usage stats")
-  .option("--name <name>", "resume name", "Wingman")
-  .option("--headline <text>", "resume headline", "Your AI agents, one resume")
+  .description("Generate a rendercv-compatible YAML résumé from AI agent usage stats")
+  .option("--name <name>", "résumé name", "Wingman")
+  .option("--headline <text>", "résumé headline", "Your AI agents, one résumé")
   .option("-o, --output <path>", "output file path", "resume.yaml")
   .option("--agents <names>", `comma-separated agent filter (${getAllAdapters().map((a) => a.name).join(", ")})`)
   .option("--since <date>", "start date (YYYY-MM-DD)")
@@ -164,7 +164,7 @@ program
     console.log("📋 Loading model metadata...");
     const modelInfo = await fetchModelInfo();
 
-    console.log("📝 Generating resume YAML...");
+    console.log("📝 Generating résumé YAML...");
     const yaml = generateResumeYaml(data, modelInfo, {
       name: opts.name,
       headline: opts.headline,
@@ -173,7 +173,7 @@ program
     const outputPath = resolve(opts.output);
     writeFileSync(outputPath, yaml, "utf-8");
     console.log(`\n✅ Saved to ${outputPath}`);
-    console.log(`📄 Render your resume at https://rendercv.com/`);
+    console.log(`📄 Render AI's résumé at https://rendercv.com/`);
   });
 
 program.parse();

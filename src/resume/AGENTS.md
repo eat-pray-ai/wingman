@@ -15,7 +15,7 @@ Generates [rendercv](https://rendercv.com/)-compatible YAML from `ShowcaseData`.
 | `generateResumeYaml(data, modelInfo, opts)` | Main entry — produces rendercv YAML with `cv:` top-level key |
 | `ResumeOptions` | Interface: required `name` and `headline` (defaults owned by Commander in `cli.ts`) |
 
-## Resume Sections
+## Résumé Sections
 
 The YAML output contains four rendercv sections:
 

@@ -4,12 +4,12 @@
 [![test](https://img.shields.io/github/actions/workflow/status/eat-pray-ai/wingman/test.yml?label=test)](https://github.com/eat-pray-ai/wingman/actions/workflows/test.yml)
 [![license](https://img.shields.io/github/license/eat-pray-ai/wingman)](LICENSE)
 
-Showcase your AI pair usage — SVG cards, resumes, and more.
+Showcase your AI pair usage — SVG cards, résumés, and more.
 
 <table>
   <tr>
     <th align="center">SVG Card</th>
-    <th align="center">Resume (<a href="docs/wingman.pdf">PDF</a>)</th>
+    <th align="center">Résumé (<a href="docs/wingman.pdf">PDF</a>)</th>
   </tr>
   <tr>
     <td align="left"><code>npx @eat-pray-ai/wingman card</code></td>
@@ -17,7 +17,7 @@ Showcase your AI pair usage — SVG cards, resumes, and more.
   </tr>
   <tr>
     <td align="center"><img src="docs/wingman.svg" width="400" alt="SVG Card"/></td>
-    <td align="center"><img src="docs/wingman.png" width="400" alt="Resume"/></td>
+    <td align="center"><img src="docs/wingman.png" width="400" alt="Résumé"/></td>
   </tr>
 </table>
 
@@ -38,7 +38,7 @@ Showcase your AI pair usage — SVG cards, resumes, and more.
 # Generate an SVG stats card (last 90 days)
 npx @eat-pray-ai/wingman card
 
-# Generate a rendercv-compatible YAML resume (last 180 days)
+# Generate a rendercv-compatible YAML résumé (last 180 days)
 npx @eat-pray-ai/wingman resume
 ```
 
@@ -80,7 +80,7 @@ The default `github-dark` theme renders:
 6. **Inventory** — plugins, MCP servers, and skills detected across agents
 7. **Footer** — branding
 
-### `resume` — rendercv YAML Resume
+### `resume` — rendercv YAML Résumé
 
 ```shell
 # All agents, last 180 days (default)
@@ -96,8 +96,8 @@ wingman resume -o my-resume.yaml
 | Flag         | Short | Default                  | Description                  |
 |--------------|-------|--------------------------|------------------------------|
 | `--output`   | `-o`  | `resume.yaml`            | Output file path             |
-| `--name`     |       | `Wingman`                | Resume name                  |
-| `--headline` |       | `Your AI agents, one resume` | Resume headline              |
+| `--name`     |       | `Wingman`                | Résumé name                  |
+| `--headline` |       | `Your AI agents, one résumé` | Résumé headline              |
 | `--agents`   |       | all detected             | Comma-separated agent filter |
 | `--since`    |       | 180 days ago             | Start date (YYYY-MM-DD)      |
 | `--until`    |       | today                    | End date (YYYY-MM-DD)        |
@@ -110,7 +110,7 @@ The generated YAML follows the [rendercv](https://rendercv.com/) schema with sec
 - **Education** — models grouped by AI lab (Anthropic, Google, OpenAI, etc.)
 - **Technologies** — plugins, MCP servers, skills inventory
 
-Render your resume at [rendercv.com](https://rendercv.com/).
+Render ai résumé at [rendercv.com](https://rendercv.com/).
 
 ## How It Works
 
@@ -123,14 +123,14 @@ Agent Adapters → UsageRecord[] → Aggregator → ShowcaseData → Renderer �
 3. **Pricing engine** fetches model costs from [models.dev](https://models.dev) (24h disk cache) to estimate spend
 4. **Renderers** produce output:
    - **Theme renderer** → self-contained SVG string (embeddable anywhere)
-   - **Resume renderer** → rendercv-compatible YAML
+   - **Résumé renderer** → rendercv-compatible YAML
 
 ## Development
 
 ```shell
 npm install
 npm run dev -- card --days 30        # run directly via tsx
-npm run dev -- resume                # generate resume YAML
+npm run dev -- resume                # generate résumé YAML
 npm run build                        # bundle to dist/
 npx tsc --noEmit                     # type-check
 npm test                             # vitest

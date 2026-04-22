@@ -1,7 +1,7 @@
 {
   "name": "@eat-pray-ai/wingman",
   "version": "0.1.0",
-  "description": "Showcase your AI pair usage — SVG cards, resumes, and more",
+  "description": "Showcase your AI pair usage — SVG cards, résumés, and more",
   "type": "module",
   "bin": {
     "wingman": "./dist/bin/wingman.mjs"

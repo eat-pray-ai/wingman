@@ -118,7 +118,7 @@ Agent Adapters → UsageRecord[] → Aggregator → ShowcaseData → Renderer �
 
 Two commands share the pipeline up to `ShowcaseData`:
 - `card` → Theme Renderer → SVG
-- `resume` → Resume Renderer → rendercv YAML (render at [rendercv.com](https://rendercv.com/))
+- `resume` → Résumé Renderer → rendercv YAML (render at [rendercv.com](https://rendercv.com/))
 
 ### Dependencies
 
@@ -128,7 +128,7 @@ Two commands share the pipeline up to `ShowcaseData`:
 - `smol-toml` — parse codex TOML config
 - `bootstrap-icons` — SVG icon data
 - No SVG libraries — pure string templating
-- No YAML libraries — resume YAML is pure string concatenation with smart quoting
+- No YAML libraries — résumé YAML is pure string concatenation with smart quoting
 
 ---
 

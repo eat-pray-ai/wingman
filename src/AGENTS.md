@@ -10,7 +10,7 @@ CLI (cli.ts) → Agent Adapters → UsageRecord[] → Aggregator → ShowcaseDat
 
 Two commands share the same pipeline up to `ShowcaseData`:
 - `card` → Theme Renderer → SVG
-- `resume` → Resume Renderer → rendercv YAML
+- `resume` → Résumé Renderer → rendercv YAML
 
 ## Modules
 
@@ -29,7 +29,7 @@ Two commands share the same pipeline up to `ShowcaseData`:
 | `themes/` | [AGENTS.md](themes/AGENTS.md) | Theme renderers — converts `ShowcaseData` → SVG string |
 | `svg/` | [AGENTS.md](svg/AGENTS.md) | Reusable SVG primitives (text, rect, sparkline, donut, pill) |
 | `pricing/` | [AGENTS.md](pricing/AGENTS.md) | Model cost resolution and metadata via models.dev API |
-| `resume/` | — | Resume YAML renderer — converts `ShowcaseData` → rendercv YAML |
+| `resume/` | — | résumé YAML renderer — converts `ShowcaseData` → rendercv YAML |
 
 ## Extension Points
 
