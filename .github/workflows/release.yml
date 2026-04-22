@@ -40,7 +40,7 @@ jobs:
             echo "npx @eat-pray-ai/wingman@${VERSION} resume"
             echo '```'
             echo ""
-            echo "[![npm](https://img.shields.io/npm/v/@eat-pray-ai/wingman)](https://www.npmjs.com/package/@eat-pray-ai/wingman/v/${VERSION})"
+            echo "[![npm](https://img.shields.io/badge/npm-v${VERSION}-fe7d37)](https://www.npmjs.com/package/@eat-pray-ai/wingman/v/${VERSION})"
             echo ""
             echo "## Changes"
             echo ""
