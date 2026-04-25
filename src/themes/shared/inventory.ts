@@ -33,34 +33,25 @@ export function renderInventory(ctx: RenderContext, data: ShowcaseData, y: numbe
   const rowH = 26;
   let curY = startY + 28;
 
-  // ── Plugins ──
-  for (const plugin of inv.plugins) {
-    const label = plugin.version ? `${plugin.name} v${plugin.version}` : plugin.name;
-    parts.push(svgIcon(ctx.padX, curY + 3, ICONS.puzzle, { fill: ctx.colors.blue, size: 12 }));
-    const pill = svgPill(ctx.padX + 16, curY, label, {
-      fill: "#1f6feb22",
-      textFill: ctx.colors.blue,
-      badges: toBadges(plugin.sources),
-    });
-    parts.push(pill.svg);
-    curY += rowH;
-  }
-
   // Helper: render a section of InventoryItems with badges inside pills
   const renderItemSection = (
-    iconPath: string, iconColor: string, title: string, items: typeof inv.mcpServers,
+    iconPath: string, iconColor: string, title: string,
+    items: { name: string; sources: string[] }[],
+    pillOpts?: { fill?: string; textFill?: string },
   ) => {
     parts.push(svgIcon(ctx.padX, curY + 3, iconPath, { fill: iconColor, size: 12 }));
     parts.push(svgText(ctx.padX + 16, curY + 12, title, { fill: ctx.colors.secondary, size: 10 }));
     curY += 18;
     let px = ctx.padX + indent;
+    const fill = pillOpts?.fill ?? ctx.colors.separator;
+    const textFill = pillOpts?.textFill ?? ctx.colors.secondary;
     for (const item of items) {
       const badges = toBadges(item.sources);
-      const sp = svgPill(px, curY, item.name, { fill: ctx.colors.separator, textFill: ctx.colors.secondary, badges });
+      const sp = svgPill(px, curY, item.name, { fill, textFill, badges });
       if (px + sp.width > maxX && px > ctx.padX + indent) {
         curY += rowH;
         px = ctx.padX + indent;
-        const sp2 = svgPill(px, curY, item.name, { fill: ctx.colors.separator, textFill: ctx.colors.secondary, badges });
+        const sp2 = svgPill(px, curY, item.name, { fill, textFill, badges });
         parts.push(sp2.svg);
         px += sp2.width + pillGap;
       } else {
@@ -71,6 +62,15 @@ export function renderInventory(ctx: RenderContext, data: ShowcaseData, y: numbe
     curY += rowH;
   };
 
+  if (hasPlugins) {
+    const pluginItems = inv.plugins.map(p => ({
+      name: p.version ? `${p.name} v${p.version}` : p.name,
+      sources: p.sources,
+    }));
+    renderItemSection(ICONS.puzzle, ctx.colors.blue, "Plugins", pluginItems, {
+      fill: "#1f6feb22", textFill: ctx.colors.blue,
+    });
+  }
   if (hasMcp) renderItemSection(ICONS.tools, ctx.colors.green, "MCP Servers", inv.mcpServers);
   if (hasSkills) renderItemSection(ICONS.hexagon, ctx.colors.purple, "Skills", inv.skills);
 
