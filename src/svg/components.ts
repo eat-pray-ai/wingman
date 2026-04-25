@@ -6,6 +6,9 @@
 const MONO_FONT = `"ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace"`;
 
 export function formatNumber(n: number): string {
+  if (n >= 1_000_000_000_000) {
+    return `${(n / 1_000_000_000_000).toFixed(1)}T`;
+  }
   if (n >= 1_000_000_000) {
     return `${(n / 1_000_000_000).toFixed(1)}B`;
   }
