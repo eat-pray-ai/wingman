@@ -17,7 +17,7 @@ Showcase your AI pair usage — SVG cards, résumés, and more.
   </tr>
   <tr>
     <td align="center"><img src="docs/wingman.svg" width="400" alt="SVG Card"/></td>
-    <td align="center"><img src="docs/wingman.png" width="400" alt="Résumé"/></td>
+    <td align="center"><img src="docs/resume.svg" width="400" alt="Résumé"/></td>
   </tr>
 </table>
 

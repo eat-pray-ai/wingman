@@ -61,8 +61,8 @@ cv:
           - '**o3 Pro**: 200M tokens, $100.00'
     technologies:
       - label: Plugins
-        details: superpowers v5.0
+        details: 'superpowers v5.0, eat-pray-ai v0.3.3'
       - label: MCP Servers
         details: 'github, playwright, context7, yutu'
       - label: Skills
-        details: 'debugging, code-review'
+        details: 'debugging, code-review, youtube'

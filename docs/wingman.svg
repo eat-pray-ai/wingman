@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="660" height="770" viewBox="0 0 660 770">
-<rect x="0" y="0" width="660" height="770" fill="#0d1117" rx="12" stroke="#30363d" stroke-width="1"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="660" height="788" viewBox="0 0 660 788">
+<rect x="0" y="0" width="660" height="788" fill="#0d1117" rx="12" stroke="#30363d" stroke-width="1"/>
 <text x="24" y="30" fill="#58a6ff" font-size="16" font-weight="bold" text-anchor="start" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">Wingman Stats</text>
 <text x="636" y="30" fill="#484f58" font-size="11" font-weight="normal" text-anchor="end" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">Oct 2, 2025 – Mar 30, 2026</text>
 <line x1="24" y1="48" x2="636" y2="48" stroke="#21262d" stroke-width="1"/>
@@ -346,35 +346,42 @@
 <g transform="translate(24, 595) scale(0.6875)"><path fill="#8b949e" d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464z"/></g>
 <text x="38" y="606" fill="#8b949e" font-size="11" font-weight="normal" text-anchor="start" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">INVENTORY</text>
 <g transform="translate(24, 621) scale(0.75)"><path fill="#58a6ff" d="M3.112 3.645A1.5 1.5 0 0 1 4.605 2H7a.5.5 0 0 1 .5.5v.382c0 .696-.497 1.182-.872 1.469a.5.5 0 0 0-.115.118l-.012.025L6.5 4.5v.003l.003.01q.005.015.036.053a.9.9 0 0 0 .27.194C7.09 4.9 7.51 5 8 5c.492 0 .912-.1 1.19-.24a.9.9 0 0 0 .271-.194.2.2 0 0 0 .039-.063v-.009l-.012-.025a.5.5 0 0 0-.115-.118c-.375-.287-.872-.773-.872-1.469V2.5A.5.5 0 0 1 9 2h2.395a1.5 1.5 0 0 1 1.493 1.645L12.645 6.5h.237c.195 0 .42-.147.675-.48.21-.274.528-.52.943-.52.568 0 .947.447 1.154.862C15.877 6.807 16 7.387 16 8s-.123 1.193-.346 1.638c-.207.415-.586.862-1.154.862-.415 0-.733-.246-.943-.52-.255-.333-.48-.48-.675-.48h-.237l.243 2.855A1.5 1.5 0 0 1 11.395 14H9a.5.5 0 0 1-.5-.5v-.382c0-.696.497-1.182.872-1.469a.5.5 0 0 0 .115-.118l.012-.025.001-.006v-.003a.2.2 0 0 0-.039-.064.9.9 0 0 0-.27-.193C8.91 11.1 8.49 11 8 11s-.912.1-1.19.24a.9.9 0 0 0-.271.194.2.2 0 0 0-.039.063v.003l.001.006.012.025c.016.027.05.068.115.118.375.287.872.773.872 1.469v.382a.5.5 0 0 1-.5.5H4.605a1.5 1.5 0 0 1-1.493-1.645L3.356 9.5h-.238c-.195 0-.42.147-.675.48-.21.274-.528.52-.943.52-.568 0-.947-.447-1.154-.862C.123 9.193 0 8.613 0 8s.123-1.193.346-1.638C.553 5.947.932 5.5 1.5 5.5c.415 0 .733.246.943.52.255.333.48.48.675.48h.238zM4.605 3a.5.5 0 0 0-.498.55l.001.007.29 3.4A.5.5 0 0 1 3.9 7.5h-.782c-.696 0-1.182-.497-1.469-.872a.5.5 0 0 0-.118-.115l-.025-.012L1.5 6.5h-.003a.2.2 0 0 0-.064.039.9.9 0 0 0-.193.27C1.1 7.09 1 7.51 1 8s.1.912.24 1.19c.07.14.14.225.194.271a.2.2 0 0 0 .063.039H1.5l.006-.001.025-.012a.5.5 0 0 0 .118-.115c.287-.375.773-.872 1.469-.872H3.9a.5.5 0 0 1 .498.542l-.29 3.408a.5.5 0 0 0 .497.55h1.878c-.048-.166-.195-.352-.463-.557-.274-.21-.52-.528-.52-.943 0-.568.447-.947.862-1.154C6.807 10.123 7.387 10 8 10s1.193.123 1.638.346c.415.207.862.586.862 1.154 0 .415-.246.733-.52.943-.268.205-.415.39-.463.557h1.878a.5.5 0 0 0 .498-.55l-.001-.007-.29-3.4A.5.5 0 0 1 12.1 8.5h.782c.696 0 1.182.497 1.469.872.05.065.091.099.118.115l.025.012.006.001h.003a.2.2 0 0 0 .064-.039.9.9 0 0 0 .193-.27c.14-.28.24-.7.24-1.191s-.1-.912-.24-1.19a.9.9 0 0 0-.194-.271.2.2 0 0 0-.063-.039H14.5l-.006.001-.025.012a.5.5 0 0 0-.118.115c-.287.375-.773.872-1.469.872H12.1a.5.5 0 0 1-.498-.543l.29-3.407a.5.5 0 0 0-.497-.55H9.517c.048.166.195.352.463.557.274.21.52.528.52.943 0 .568-.447.947-.862 1.154C9.193 5.877 8.613 6 8 6s-1.193-.123-1.638-.346C5.947 5.447 5.5 5.068 5.5 4.5c0-.415.246-.733.52-.943.268-.205.415-.39.463-.557z"/></g>
-<rect x="40" y="618" width="156" height="20" fill="#1f6feb22" rx="10"/>
-<rect x="52" y="625" width="6" height="6" fill="#1f6feb" rx="1"/>
-<rect x="61" y="625" width="6" height="6" fill="#3fb950" rx="1"/>
-<text x="128" y="632" fill="#58a6ff" font-size="11" font-weight="normal" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">superpowers v5.0</text>
-<g transform="translate(24, 647) scale(0.75)"><path fill="#3fb950" d="M1 0 0 1l2.2 3.081a1 1 0 0 0 .815.419h.07a1 1 0 0 1 .708.293l2.675 2.675-2.617 2.654A3.003 3.003 0 0 0 0 13a3 3 0 1 0 5.878-.851l2.654-2.617.968.968-.305.914a1 1 0 0 0 .242 1.023l3.27 3.27a.997.997 0 0 0 1.414 0l1.586-1.586a.997.997 0 0 0 0-1.414l-3.27-3.27a1 1 0 0 0-1.023-.242L10.5 9.5l-.96-.96 2.68-2.643A3.005 3.005 0 0 0 16 3q0-.405-.102-.777l-2.14 2.141L12 4l-.364-1.757L13.777.102a3 3 0 0 0-3.675 3.68L7.462 6.46 4.793 3.793a1 1 0 0 1-.293-.707v-.071a1 1 0 0 0-.419-.814zm9.646 10.646a.5.5 0 0 1 .708 0l2.914 2.915a.5.5 0 0 1-.707.707l-2.915-2.914a.5.5 0 0 1 0-.708M3 11l.471.242.529.026.287.445.445.287.026.529L5 13l-.242.471-.026.529-.445.287-.287.445-.529.026L3 15l-.471-.242L2 14.732l-.287-.445L1.268 14l-.026-.529L1 13l.242-.471.026-.529.445-.287.287-.445.529-.026z"/></g>
-<text x="40" y="656" fill="#8b949e" font-size="10" font-weight="normal" text-anchor="start" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">MCP Servers</text>
-<rect x="44" y="662" width="86" height="20" fill="#21262d" rx="10"/>
-<rect x="56" y="669" width="6" height="6" fill="#1f6feb" rx="1"/>
-<rect x="65" y="669" width="6" height="6" fill="#3fb950" rx="1"/>
-<text x="97" y="676" fill="#8b949e" font-size="11" font-weight="normal" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">github</text>
-<rect x="136" y="662" width="105" height="20" fill="#21262d" rx="10"/>
-<rect x="148" y="669" width="6" height="6" fill="#1f6feb" rx="1"/>
-<text x="194" y="676" fill="#8b949e" font-size="11" font-weight="normal" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">playwright</text>
-<rect x="247" y="662" width="109" height="20" fill="#21262d" rx="10"/>
-<rect x="259" y="669" width="6" height="6" fill="#1f6feb" rx="1"/>
-<rect x="268" y="669" width="6" height="6" fill="#3fb950" rx="1"/>
-<rect x="277" y="669" width="6" height="6" fill="#818cf8" rx="1"/>
-<text x="316" y="676" fill="#8b949e" font-size="11" font-weight="normal" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">context7</text>
-<rect x="362" y="662" width="63" height="20" fill="#21262d" rx="10"/>
-<rect x="374" y="669" width="6" height="6" fill="#1f6feb" rx="1"/>
-<text x="399" y="676" fill="#8b949e" font-size="11" font-weight="normal" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">yutu</text>
-<g transform="translate(24, 691) scale(0.75)"><path fill="#d2a8ff" d="M14 4.577v6.846L8 15l-6-3.577V4.577L8 1zM8.5.134a1 1 0 0 0-1 0l-6 3.577a1 1 0 0 0-.5.866v6.846a1 1 0 0 0 .5.866l6 3.577a1 1 0 0 0 1 0l6-3.577a1 1 0 0 0 .5-.866V4.577a1 1 0 0 0-.5-.866z"/></g>
-<text x="40" y="700" fill="#8b949e" font-size="10" font-weight="normal" text-anchor="start" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">Skills</text>
-<rect x="44" y="706" width="98" height="20" fill="#21262d" rx="10"/>
-<rect x="56" y="713" width="6" height="6" fill="#1f6feb" rx="1"/>
-<text x="98.5" y="720" fill="#8b949e" font-size="11" font-weight="normal" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">debugging</text>
-<rect x="148" y="706" width="112" height="20" fill="#21262d" rx="10"/>
-<rect x="160" y="713" width="6" height="6" fill="#1f6feb" rx="1"/>
-<text x="209.5" y="720" fill="#8b949e" font-size="11" font-weight="normal" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">code-review</text>
-<g transform="translate(206.75, 745) scale(0.75)"><path fill="#484f58" d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09zM4.157 8.5H7a.5.5 0 0 1 .478.647L6.11 13.59l5.732-6.09H9a.5.5 0 0 1-.478-.647L9.89 2.41z"/></g>
-<text x="330" y="756" fill="#484f58" font-size="11" font-weight="normal" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">Generated by @eat-pray-ai/wingman</text>
+<text x="40" y="630" fill="#8b949e" font-size="10" font-weight="normal" text-anchor="start" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">Plugins</text>
+<rect x="44" y="636" width="156" height="20" fill="#1f6feb22" rx="10"/>
+<rect x="56" y="643" width="6" height="6" fill="#1f6feb" rx="1"/>
+<rect x="65" y="643" width="6" height="6" fill="#3fb950" rx="1"/>
+<text x="132" y="650" fill="#58a6ff" font-size="11" font-weight="normal" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">superpowers v5.0</text>
+<rect x="206" y="636" width="161" height="20" fill="#1f6feb22" rx="10"/>
+<rect x="218" y="643" width="6" height="6" fill="#1f6feb" rx="1"/>
+<text x="292" y="650" fill="#58a6ff" font-size="11" font-weight="normal" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">eat-pray-ai v0.3.3</text>
+<g transform="translate(24, 665) scale(0.75)"><path fill="#3fb950" d="M1 0 0 1l2.2 3.081a1 1 0 0 0 .815.419h.07a1 1 0 0 1 .708.293l2.675 2.675-2.617 2.654A3.003 3.003 0 0 0 0 13a3 3 0 1 0 5.878-.851l2.654-2.617.968.968-.305.914a1 1 0 0 0 .242 1.023l3.27 3.27a.997.997 0 0 0 1.414 0l1.586-1.586a.997.997 0 0 0 0-1.414l-3.27-3.27a1 1 0 0 0-1.023-.242L10.5 9.5l-.96-.96 2.68-2.643A3.005 3.005 0 0 0 16 3q0-.405-.102-.777l-2.14 2.141L12 4l-.364-1.757L13.777.102a3 3 0 0 0-3.675 3.68L7.462 6.46 4.793 3.793a1 1 0 0 1-.293-.707v-.071a1 1 0 0 0-.419-.814zm9.646 10.646a.5.5 0 0 1 .708 0l2.914 2.915a.5.5 0 0 1-.707.707l-2.915-2.914a.5.5 0 0 1 0-.708M3 11l.471.242.529.026.287.445.445.287.026.529L5 13l-.242.471-.026.529-.445.287-.287.445-.529.026L3 15l-.471-.242L2 14.732l-.287-.445L1.268 14l-.026-.529L1 13l.242-.471.026-.529.445-.287.287-.445.529-.026z"/></g>
+<text x="40" y="674" fill="#8b949e" font-size="10" font-weight="normal" text-anchor="start" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">MCP Servers</text>
+<rect x="44" y="680" width="86" height="20" fill="#21262d" rx="10"/>
+<rect x="56" y="687" width="6" height="6" fill="#1f6feb" rx="1"/>
+<rect x="65" y="687" width="6" height="6" fill="#3fb950" rx="1"/>
+<text x="97" y="694" fill="#8b949e" font-size="11" font-weight="normal" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">github</text>
+<rect x="136" y="680" width="105" height="20" fill="#21262d" rx="10"/>
+<rect x="148" y="687" width="6" height="6" fill="#1f6feb" rx="1"/>
+<text x="194" y="694" fill="#8b949e" font-size="11" font-weight="normal" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">playwright</text>
+<rect x="247" y="680" width="109" height="20" fill="#21262d" rx="10"/>
+<rect x="259" y="687" width="6" height="6" fill="#1f6feb" rx="1"/>
+<rect x="268" y="687" width="6" height="6" fill="#3fb950" rx="1"/>
+<rect x="277" y="687" width="6" height="6" fill="#818cf8" rx="1"/>
+<text x="316" y="694" fill="#8b949e" font-size="11" font-weight="normal" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">context7</text>
+<rect x="362" y="680" width="63" height="20" fill="#21262d" rx="10"/>
+<rect x="374" y="687" width="6" height="6" fill="#1f6feb" rx="1"/>
+<text x="399" y="694" fill="#8b949e" font-size="11" font-weight="normal" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">yutu</text>
+<g transform="translate(24, 709) scale(0.75)"><path fill="#d2a8ff" d="M14 4.577v6.846L8 15l-6-3.577V4.577L8 1zM8.5.134a1 1 0 0 0-1 0l-6 3.577a1 1 0 0 0-.5.866v6.846a1 1 0 0 0 .5.866l6 3.577a1 1 0 0 0 1 0l6-3.577a1 1 0 0 0 .5-.866V4.577a1 1 0 0 0-.5-.866z"/></g>
+<text x="40" y="718" fill="#8b949e" font-size="10" font-weight="normal" text-anchor="start" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">Skills</text>
+<rect x="44" y="724" width="98" height="20" fill="#21262d" rx="10"/>
+<rect x="56" y="731" width="6" height="6" fill="#1f6feb" rx="1"/>
+<text x="98.5" y="738" fill="#8b949e" font-size="11" font-weight="normal" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">debugging</text>
+<rect x="148" y="724" width="112" height="20" fill="#21262d" rx="10"/>
+<rect x="160" y="731" width="6" height="6" fill="#1f6feb" rx="1"/>
+<text x="209.5" y="738" fill="#8b949e" font-size="11" font-weight="normal" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">code-review</text>
+<rect x="266" y="724" width="84" height="20" fill="#21262d" rx="10"/>
+<rect x="278" y="731" width="6" height="6" fill="#1f6feb" rx="1"/>
+<text x="313.5" y="738" fill="#8b949e" font-size="11" font-weight="normal" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">youtube</text>
+<g transform="translate(206.75, 763) scale(0.75)"><path fill="#484f58" d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09zM4.157 8.5H7a.5.5 0 0 1 .478.647L6.11 13.59l5.732-6.09H9a.5.5 0 0 1-.478-.647L9.89 2.41z"/></g>
+<text x="330" y="774" fill="#484f58" font-size="11" font-weight="normal" text-anchor="middle" font-family="ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace">Generated by @eat-pray-ai/wingman</text>
 </svg>

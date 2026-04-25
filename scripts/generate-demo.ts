@@ -117,7 +117,7 @@ const data: ShowcaseData = {
       config: {
         mcpServers: ["github", "playwright", "context7", "yutu"],
         plugins: [], models: [],
-        skills: ["debugging", "code-review"],
+        skills: ["debugging", "code-review", "youtube"],
       },
     }),
     makeAgent("opencode", "opencode", {
@@ -177,7 +177,8 @@ const data: ShowcaseData = {
   },
   inventory: {
     plugins: [
-      { name: "superpowers", version: "5.0", skills: [], agents: [], commands: [], sources: ["claude-code", "opencode"] },
+      { name: "superpowers", version: "5.0", skills: ["debugging", "code-review"], agents: [], commands: [], sources: ["claude-code", "opencode"] },
+      { name: "eat-pray-ai", version: "0.3.3", skills: [], agents: [], commands: [], sources: ["claude-code"] },
     ],
     mcpServers: [
       { name: "github", sources: ["claude-code", "opencode"] },
@@ -188,6 +189,7 @@ const data: ShowcaseData = {
     skills: [
       { name: "debugging", sources: ["claude-code"] },
       { name: "code-review", sources: ["claude-code"] },
+      { name: "youtube", sources: ["claude-code"] },
     ],
   },
 };
