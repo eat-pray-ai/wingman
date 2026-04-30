@@ -3,6 +3,7 @@
 [![npm](https://img.shields.io/npm/v/@eat-pray-ai/wingman)](https://www.npmjs.com/package/@eat-pray-ai/wingman)
 [![test](https://img.shields.io/github/actions/workflow/status/eat-pray-ai/wingman/test.yml?label=test)](https://github.com/eat-pray-ai/wingman/actions/workflows/test.yml)
 [![license](https://img.shields.io/github/license/eat-pray-ai/wingman)](LICENSE)
+[![LINUX DO](./docs/linuxdo_flat.svg)](https://linux.do/tag/2234-tag/2234)
 
 Showcase your AI pair usage — SVG cards, résumés, and more.
 
