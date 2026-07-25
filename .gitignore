@@ -6,4 +6,5 @@ docs/superpowers/
 /resume.yaml
 /resume.svg
 .claude/
+# Cursor dashboard usage-events exports dropped in the project cwd
 /usage-events*.csv

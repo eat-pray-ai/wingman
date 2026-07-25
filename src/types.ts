@@ -36,7 +36,7 @@ export interface InventoryItem {
 
 /** Optional knobs passed from the CLI into adapter.collect(). */
 export interface CollectOptions {
-  /** Path to a Cursor dashboard usage-events CSV export */
+  /** Recommended Cursor usage-events CSV path (dashboard export); state.vscdb is fallback */
   cursorUsageCsv?: string;
 }
 

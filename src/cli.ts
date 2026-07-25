@@ -197,7 +197,7 @@ program
 
 const cursorUsageCsvOption = [
   "--cursor-usage-csv <path>",
-  "Cursor usage-events CSV export (else auto-detect usage-events*.csv in cwd)",
+  "Recommended Cursor usage-events CSV (else auto-detect usage-events*.csv in cwd; state.vscdb fallback)",
 ] as const;
 
 program

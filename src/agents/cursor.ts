@@ -251,9 +251,8 @@ function collectFromStateDb(since: Date, until: Date): UsageRecord[] {
       }
     }
 
-    // 2. Composer context-window snapshots when per-bubble tokens are missing.
-    //    Cursor stores the latest context size in promptTokenBreakdown / contextTokensUsed
-    //    (not cumulative billed tokens) — best local estimate available.
+    // 2. Fallback: composer context-window snapshots when per-bubble tokens are missing.
+    //    Latest context size in promptTokenBreakdown / contextTokensUsed (not cumulative billed tokens).
     const composerRows = db
       .prepare("SELECT key, value FROM cursorDiskKV WHERE key LIKE 'composerData:%'")
       .all() as { key: string; value: string | Buffer }[];
@@ -436,7 +435,7 @@ export default {
   async collect(since: Date, until: Date, options?: CollectOptions): Promise<UsageRecord[]> {
     const records: UsageRecord[] = [];
     try {
-      // Prefer an explicit Cursor usage-events CSV (resolved by the CLI)
+      // Recommended: usage-events CSV resolved by the CLI; state.vscdb is fallback only
       if (options?.cursorUsageCsv) {
         const csvRecords = parseUsageEventsCsv(options.cursorUsageCsv, since, until);
         if (csvRecords.length > 0) return csvRecords;

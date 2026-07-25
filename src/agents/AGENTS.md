@@ -11,7 +11,7 @@ Each file implements an `AgentAdapter` that reads local AI coding agent data.
 | `gemini-cli.ts` | Gemini CLI | `~/.gemini/tmp/*/chats/session-*.json` (JSON) |
 | `codex.ts` | Codex | `~/.codex/state_5.sqlite` (SQLite) |
 | `github-copilot.ts` | GitHub Copilot | VS Code `workspaceStorage` chat sessions + `state.vscdb` |
-| `cursor.ts` | Cursor | `state.vscdb` composers (context-size estimate); optional `usage-events*.csv` |
+| `cursor.ts` | Cursor | `usage-events*.csv` (recommended); `state.vscdb` fallback |
 | `registry.ts` | — | Imports all adapters, exports `getAllAdapters()` |
 | `skills.ts` | — | Shared skill directory scanner used by all adapters |
 
@@ -56,41 +56,26 @@ export default {
 
 ## Cursor notes
 
-### Usage-events CSV (recommended for accurate tokens)
+### Recommended: usage-events CSV
 
-Cursor’s local `state.vscdb` usually lacks a full per-request token split. For accurate in/out/cache numbers, export **Usage Events** from the Cursor dashboard and feed the CSV to Wingman.
+Cursor does not persist reliable per-request token totals in local storage. For accurate in/out/cache numbers, export **Usage Events** from https://cursor.com/dashboard/usage and feed the CSV to Wingman. Local `state.vscdb` is only a fallback.
 
-Resolution order (CLI, when Cursor is **detected** on the device **or** named in `--agents` — no CSV warnings otherwise):
+CLI resolution (when Cursor is **detected** on the device **or** named in `--agents` — no CSV warnings otherwise):
 
 1. `--cursor-usage-csv <path>` if provided
 2. Else a single `usage-events*.csv` in the **working directory** (announced to the user)
 3. Else if multiple `usage-events*.csv` in cwd → **fail** and ask the user to pass `--cursor-usage-csv` or delete unneeded files
-4. Else **warn** and fall back to `state.vscdb` estimates. The warning explains that local figures are usually much smaller/inaccurate (per-chat context snapshots, not cumulative billed usage), that the whole snapshot is mapped to `in` with `out`/`read`/`write` left at 0, and **strongly recommends** exporting a CSV from https://cursor.com/dashboard/usage.
+4. Else **warn** and fall back to `state.vscdb`. The warning explains that local figures are usually much smaller/inaccurate (per-chat context snapshots, not cumulative billed usage), that the whole snapshot is mapped to `in` with `out`/`read`/`write` left at 0, and **strongly recommends** the dashboard CSV.
 
 `~/.cursor/usage-events*.csv` is **not** scanned — that is not a conventional location for these exports.
 
-If a resolved CSV’s newest event date (UTC) is older than `--until` / today, Wingman warns that the export may be stale and points at the same dashboard URL.
+If a resolved CSV’s newest event date (UTC) is older than `--until` / today, Wingman warns that the export may be stale.
 
-Priority inside the Cursor adapter when collecting:
+Adapter collect priority:
 
-1. Resolved usage-events CSV (full in/out/cache columns from Cursor’s export)
-2. Else non-zero `bubbleId` `tokenCount` rows from `state.vscdb` (rare on recent Cursor builds — usually `{0,0}`)
-3. Else each composer’s `promptTokenBreakdown.totalUsedTokens` / `contextTokensUsed`
-
-### Why cards often show `N in / 0 out / 0 read / 0 write`
-
-Wingman’s breakdown means:
-
-| Label | Field | Meaning |
-|---|---|---|
-| **in** | `tokens.input` | Prompt / context tokens sent to the model |
-| **out** | `tokens.output` | Completion tokens the model generated |
-| **read** | `tokens.cacheRead` | Prompt-cache **read** (reuse of cached prompt tokens) |
-| **write** | `tokens.cacheWrite` | Prompt-cache **write** (tokens written into the cache) |
-
-**out ≠ write:** out is generated text; write is input-side cache bookkeeping.
-
-On the `state.vscdb` path (no CSV), Cursor usually does not persist reliable per-request usage. The composer fallback is a **context-window snapshot** (system + tools + rules + conversation, etc.) — not a sum of billed request tokens — mapped entirely to `input`, with `output` / `cacheRead` / `cacheWrite` left at `0`. Totals are often much smaller than dashboard/CSV figures and cannot be split into in/out/read/write. Prefer the usage-events CSV whenever Cursor is in use.
+1. Resolved usage-events CSV (full in/out/cache columns)
+2. Else non-zero `bubbleId` `tokenCount` rows from `state.vscdb` (rare — usually `{0,0}`)
+3. Else each composer’s `promptTokenBreakdown.totalUsedTokens` / `contextTokensUsed` (context-window snapshot → `input` only)
 
 ### Config inventory
 
