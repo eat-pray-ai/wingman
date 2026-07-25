@@ -11,7 +11,7 @@ Each file implements an `AgentAdapter` that reads local AI coding agent data.
 | `gemini-cli.ts` | Gemini CLI | `~/.gemini/tmp/*/chats/session-*.json` (JSON) |
 | `codex.ts` | Codex | `~/.codex/state_5.sqlite` (SQLite) |
 | `github-copilot.ts` | GitHub Copilot | VS Code `workspaceStorage` chat sessions + `state.vscdb` |
-| `cursor.ts` | Cursor | `state.vscdb` bubbles/composers; optional `~/.cursor/usage-events*.csv` |
+| `cursor.ts` | Cursor | `state.vscdb` composers (context-size estimate); optional CSV override |
 | `registry.ts` | — | Imports all adapters, exports `getAllAdapters()` |
 | `skills.ts` | — | Shared skill directory scanner used by all adapters |
 
@@ -55,10 +55,31 @@ export default {
 
 ## Cursor notes
 
-Cursor’s local `bubbleId` `tokenCount` fields are often zero. The adapter:
+### Data sources (automated vs optional)
 
-1. Prefers `~/.cursor/usage-events*.csv` (dashboard exports) when present
-2. Else uses non-zero bubble tokens from `state.vscdb`
-3. Else falls back to each composer’s `promptTokenBreakdown.totalUsedTokens` / `contextTokensUsed` (context-window snapshot, not cumulative billed tokens)
+The default automated path reads `state.vscdb` only. Optional `~/.cursor/usage-events*.csv` (dashboard export) is supported if present, but is **not** part of the normal flow — dropping a CSV is manual and not required.
+
+Priority when collecting:
+
+1. `~/.cursor/usage-events*.csv` if present (full in/out/cache columns from Cursor’s export)
+2. Else non-zero `bubbleId` `tokenCount` rows from `state.vscdb` (rare on recent Cursor builds — usually `{0,0}`)
+3. Else each composer’s `promptTokenBreakdown.totalUsedTokens` / `contextTokensUsed`
+
+### Why cards often show `N in / 0 out / 0 read / 0 write`
+
+Wingman’s breakdown means:
+
+| Label | Field | Meaning |
+|---|---|---|
+| **in** | `tokens.input` | Prompt / context tokens sent to the model |
+| **out** | `tokens.output` | Completion tokens the model generated |
+| **read** | `tokens.cacheRead` | Prompt-cache **read** (reuse of cached prompt tokens) |
+| **write** | `tokens.cacheWrite` | Prompt-cache **write** (tokens written into the cache) |
+
+**out ≠ write:** out is generated text; write is input-side cache bookkeeping.
+
+On the automated `state.vscdb` path, Cursor usually does not persist reliable per-request usage. The composer fallback is a **context-window snapshot** (system + tools + rules + conversation, etc.), mapped entirely to `input`, with `output` / `cacheRead` / `cacheWrite` left at `0`. That total undercounts cumulative billed usage and is not a full in/out/cache split. Accurate out/read/write exist on Cursor’s dashboard / usage CSV / API, not in the local DB fields we use by default.
+
+### Config inventory
 
 Config reads skills (`skills-cursor` / `skills`), plugins (`plugins/cache` + `local`), MCP (`mcp.json` + plugin `.mcp.json`), and models from `cli-config.json`.
