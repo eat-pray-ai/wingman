@@ -42,8 +42,7 @@ Two commands share the same pipeline up to `ShowcaseData`:
 | Interface | Role |
 |---|---|
 | `UsageRecord` | Normalized per-interaction record from any agent adapter |
-| `AgentAdapter` | Contract: `detect()`, `collect(since, until, options?)`, `config()` |
-| `CollectOptions` | Optional CLI knobs for `collect()` (e.g. `cursorUsageCsv`) |
+| `AgentAdapter` | Contract: `detect()`, `collect()`, `config()` |
 | `AgentConfig` | MCP servers, plugins, models, skills for one agent |
 | `ShowcaseData` | Aggregated stats consumed by theme renderers |
 | `ThemeRenderer` | Contract: `name`, `render(data) → SVG string` |

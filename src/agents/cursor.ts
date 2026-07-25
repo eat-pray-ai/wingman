@@ -2,8 +2,13 @@ import { homedir, platform } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import Database from "better-sqlite3";
-import type { AgentAdapter, AgentConfig, CollectOptions, PluginInfo, UsageRecord } from "../types.js";
+import type { AgentAdapter, AgentConfig, PluginInfo, UsageRecord } from "../types.js";
 import { scanSkillDir } from "./skills.js";
+
+/** Optional Cursor-only knobs for collect(); CLI normally uses prepareCursorUsageCsv(). */
+interface CursorCollectOptions {
+  cursorUsageCsv?: string;
+}
 
 function getCursorUserDir(): string {
   switch (platform()) {
@@ -86,6 +91,111 @@ export function peekUsageEventsCsvNewest(filePath: string): Date | null {
   } catch {
     return null;
   }
+}
+
+export const CURSOR_USAGE_CSV_OPTION = [
+  "--cursor-usage-csv <path>",
+  "Recommended Cursor usage-events CSV (else auto-detect usage-events*.csv in cwd; state.vscdb fallback)",
+] as const;
+
+const CURSOR_USAGE_DASHBOARD_URL = "https://cursor.com/dashboard/usage";
+
+/** Resolved by prepareCursorUsageCsv(); consumed by collect() when no explicit options are passed. */
+let preparedUsageCsv: string | undefined;
+
+function ymdUtc(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+function agentsFilterHasCursor(agents?: string): boolean {
+  if (!agents) return false;
+  return agents.split(",").map((s) => s.trim()).includes("cursor");
+}
+
+function shouldHandleCursorCsv(agents: string | undefined, cursorDetected: boolean): boolean {
+  return cursorDetected || agentsFilterHasCursor(agents);
+}
+
+function warnIfCursorUsageCsvStale(path: string, until: Date): void {
+  const newest = peekUsageEventsCsvNewest(path);
+  if (!newest) return;
+  if (ymdUtc(newest) < ymdUtc(until)) {
+    console.warn(
+      `⚠ Cursor usage CSV looks stale: newest event is ${ymdUtc(newest)}, but --until/today is ${ymdUtc(until)}.`,
+    );
+    console.warn(
+      `  Re-export from ${CURSOR_USAGE_DASHBOARD_URL} (Export CSV) for a fresher file.`,
+    );
+  }
+}
+
+/**
+ * Resolve a Cursor usage-events CSV for the CLI and store it for collect().
+ * Runs when Cursor is detected or named in `--agents`.
+ * 1. `--cursor-usage-csv` if provided
+ * 2. else a single `usage-events*.csv` in cwd (announce it)
+ * 3. else fail when multiple matches exist
+ * 4. else warn about local DB undercount and recommend the dashboard CSV
+ */
+export function prepareCursorUsageCsv(input: {
+  explicitPath?: string;
+  agents?: string;
+  cursorDetected: boolean;
+  until: Date;
+}): string | undefined {
+  preparedUsageCsv = undefined;
+
+  // Skip when Cursor is neither on-device nor named in --agents.
+  if (!shouldHandleCursorCsv(input.agents, input.cursorDetected)) return undefined;
+
+  if (input.explicitPath) {
+    const path = resolve(input.explicitPath);
+    if (!existsSync(path)) {
+      console.error(`Cursor usage CSV not found: ${path}`);
+      process.exit(1);
+    }
+    console.log(`📄 Using Cursor usage CSV: ${path}`);
+    warnIfCursorUsageCsvStale(path, input.until);
+    preparedUsageCsv = path;
+    return path;
+  }
+
+  const matches = findUsageEventsCsvFiles(process.cwd());
+  if (matches.length === 1) {
+    console.log(`📄 Detected Cursor usage CSV in working directory: ${basename(matches[0])}`);
+    warnIfCursorUsageCsvStale(matches[0], input.until);
+    preparedUsageCsv = matches[0];
+    return matches[0];
+  }
+
+  if (matches.length > 1) {
+    console.error("Multiple Cursor usage-events CSV files found in working directory:");
+    for (const file of matches) {
+      console.error(`  - ${basename(file)}`);
+    }
+    console.error("Pass one with --cursor-usage-csv <path>, or delete the ones you do not need.");
+    process.exit(1);
+  }
+
+  console.warn(
+    "⚠ No usage-events*.csv in the working directory (and --cursor-usage-csv not set).",
+  );
+  console.warn(
+    "  Falling back to local state.vscdb estimates. These are usually much smaller and inaccurate:",
+  );
+  console.warn(
+    "  each chat contributes only a latest context-window snapshot (not cumulative billed usage),",
+  );
+  console.warn(
+    "  with no in/out/read/write split — the whole snapshot is put into `in` (out/read/write stay 0).",
+  );
+  console.warn(
+    "  Strongly recommended: download a usage-events CSV for accurate totals.",
+  );
+  console.warn(`  1. Open ${CURSOR_USAGE_DASHBOARD_URL}`);
+  console.warn("  2. Click Export CSV (usage-events-*.csv)");
+  console.warn("  3. Place it in the cwd, or pass --cursor-usage-csv <path>");
+  return undefined;
 }
 
 /** Parse a Cursor dashboard usage-events CSV export into usage records. */
@@ -432,12 +542,13 @@ export default {
     return existsSync(CURSOR_DIR) || existsSync(STATE_DB);
   },
 
-  async collect(since: Date, until: Date, options?: CollectOptions): Promise<UsageRecord[]> {
+  async collect(since: Date, until: Date, options?: CursorCollectOptions): Promise<UsageRecord[]> {
     const records: UsageRecord[] = [];
     try {
-      // Recommended: usage-events CSV resolved by the CLI; state.vscdb is fallback only
-      if (options?.cursorUsageCsv) {
-        const csvRecords = parseUsageEventsCsv(options.cursorUsageCsv, since, until);
+      // Recommended: usage-events CSV from prepareCursorUsageCsv() or test options; state.vscdb is fallback
+      const csvPath = options?.cursorUsageCsv ?? preparedUsageCsv;
+      if (csvPath) {
+        const csvRecords = parseUsageEventsCsv(csvPath, since, until);
         if (csvRecords.length > 0) return csvRecords;
       }
 

@@ -28,13 +28,12 @@ export default {
   name: "my-agent",          // kebab-case identifier
   displayName: "My Agent",   // human-readable
   async detect() { return existsSync(SOME_PATH); },
-  async collect(since, until, options?) {
+  async collect(since, until) {
     const records: UsageRecord[] = [];
     try {
       // 1. Check data source exists
       // 2. Read/query data, filter by [since, until) range
       // 3. Push UsageRecord for each assistant message with usage data
-      // options may carry CLI knobs (e.g. cursorUsageCsv)
     } catch { /* return what we have */ }
     return records;
   },
@@ -60,7 +59,7 @@ export default {
 
 Cursor does not persist reliable per-request token totals in local storage. For accurate in/out/cache numbers, export **Usage Events** from https://cursor.com/dashboard/usage and feed the CSV to Wingman. Local `state.vscdb` is only a fallback.
 
-CLI resolution (when Cursor is **detected** on the device **or** named in `--agents` — no CSV warnings otherwise):
+Resolution lives in `prepareCursorUsageCsv()` in `cursor.ts` (CLI calls it after detect; when Cursor is **detected** or named in `--agents` — no CSV warnings otherwise):
 
 1. `--cursor-usage-csv <path>` if provided
 2. Else a single `usage-events*.csv` in the **working directory** (announced to the user)
