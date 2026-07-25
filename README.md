@@ -31,6 +31,7 @@ Showcase your AI pair usage — SVG cards, résumés, and more.
 | **Gemini CLI**  | `~/.gemini/tmp/*/chats/session-*.json` | JSON   |
 | **Codex**       | `~/.codex/state_5.sqlite`              | SQLite |
 | **GitHub Copilot** | VS Code `workspaceStorage/` + `globalStorage/state.vscdb` | JSON + SQLite |
+| **Cursor**         | `state.vscdb` (+ optional `usage-events*.csv` export) | SQLite + CSV |
 | **MORE**           | Coming soon!                           | TBD    |
 
 ## Quick Start
@@ -59,17 +60,21 @@ wingman card --since 2026-01-01 --until 2026-03-30
 
 # Last 7 days with specific theme
 wingman card --days 7 --theme github-dark
+
+# Cursor: use a dashboard usage-events CSV (or drop usage-events*.csv in cwd)
+wingman card --agents cursor --cursor-usage-csv ./usage-events-2026-07-25.csv
 ```
 
-| Flag         | Short | Default       | Description                         |
-|--------------|-------|---------------|-------------------------------------|
-| `--output`   | `-o`  | `wingman.svg` | Output file path                    |
-| `--theme`    | `-t`  | `github-dark` | Theme name                          |
-| `--agents`   |       | all detected  | Comma-separated agent filter        |
-| `--since`    |       | 90 days ago   | Start date (YYYY-MM-DD)             |
-| `--until`    |       | today         | End date (YYYY-MM-DD)               |
-| `--days`     |       | `90`          | Last N days shorthand               |
-| `--sections` |       | all           | Comma-separated sections to include |
+| Flag                 | Short | Default       | Description                         |
+|----------------------|-------|---------------|-------------------------------------|
+| `--output`           | `-o`  | `wingman.svg` | Output file path                    |
+| `--theme`            | `-t`  | `github-dark` | Theme name                          |
+| `--agents`           |       | all detected  | Comma-separated agent filter        |
+| `--since`            |       | 90 days ago   | Start date (YYYY-MM-DD)             |
+| `--until`            |       | today         | End date (YYYY-MM-DD)               |
+| `--days`             |       | `90`          | Last N days shorthand               |
+| `--sections`         |       | all           | Comma-separated sections to include |
+| `--cursor-usage-csv` |       | auto / none   | Cursor usage-events CSV path        |
 
 The default `github-dark` theme renders:
 
@@ -94,15 +99,16 @@ wingman resume --name "My Team" --headline "AI Development"
 wingman resume -o my-resume.yaml
 ```
 
-| Flag         | Short | Default                  | Description                  |
-|--------------|-------|--------------------------|------------------------------|
-| `--output`   | `-o`  | `resume.yaml`            | Output file path             |
-| `--name`     |       | `Wingman`                | Résumé name                  |
-| `--headline` |       | `Your AI agents, one résumé` | Résumé headline              |
-| `--agents`   |       | all detected             | Comma-separated agent filter |
-| `--since`    |       | 180 days ago             | Start date (YYYY-MM-DD)      |
-| `--until`    |       | today                    | End date (YYYY-MM-DD)        |
-| `--days`     |       | `180`                    | Last N days shorthand        |
+| Flag                 | Short | Default                  | Description                  |
+|----------------------|-------|--------------------------|------------------------------|
+| `--output`           | `-o`  | `resume.yaml`            | Output file path             |
+| `--name`             |       | `Wingman`                | Résumé name                  |
+| `--headline`         |       | `Your AI agents, one résumé` | Résumé headline              |
+| `--agents`           |       | all detected             | Comma-separated agent filter |
+| `--since`            |       | 180 days ago             | Start date (YYYY-MM-DD)      |
+| `--until`            |       | today                    | End date (YYYY-MM-DD)        |
+| `--days`             |       | `180`                    | Last N days shorthand        |
+| `--cursor-usage-csv` |       | auto / none              | Cursor usage-events CSV path |
 
 The generated YAML follows the [rendercv](https://rendercv.com/) schema with sections:
 

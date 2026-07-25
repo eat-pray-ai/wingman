@@ -6,3 +6,4 @@ docs/superpowers/
 /resume.yaml
 /resume.svg
 .claude/
+/usage-events*.csv

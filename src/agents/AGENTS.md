@@ -11,7 +11,7 @@ Each file implements an `AgentAdapter` that reads local AI coding agent data.
 | `gemini-cli.ts` | Gemini CLI | `~/.gemini/tmp/*/chats/session-*.json` (JSON) |
 | `codex.ts` | Codex | `~/.codex/state_5.sqlite` (SQLite) |
 | `github-copilot.ts` | GitHub Copilot | VS Code `workspaceStorage` chat sessions + `state.vscdb` |
-| `cursor.ts` | Cursor | `state.vscdb` composers (context-size estimate); optional CSV override |
+| `cursor.ts` | Cursor | `state.vscdb` composers (context-size estimate); optional `usage-events*.csv` |
 | `registry.ts` | — | Imports all adapters, exports `getAllAdapters()` |
 | `skills.ts` | — | Shared skill directory scanner used by all adapters |
 
@@ -28,12 +28,13 @@ export default {
   name: "my-agent",          // kebab-case identifier
   displayName: "My Agent",   // human-readable
   async detect() { return existsSync(SOME_PATH); },
-  async collect(since, until) {
+  async collect(since, until, options?) {
     const records: UsageRecord[] = [];
     try {
       // 1. Check data source exists
       // 2. Read/query data, filter by [since, until) range
       // 3. Push UsageRecord for each assistant message with usage data
+      // options may carry CLI knobs (e.g. cursorUsageCsv)
     } catch { /* return what we have */ }
     return records;
   },
@@ -55,13 +56,24 @@ export default {
 
 ## Cursor notes
 
-### Data sources (automated vs optional)
+### Usage-events CSV (recommended for accurate tokens)
 
-The default automated path reads `state.vscdb` only. Optional `~/.cursor/usage-events*.csv` (dashboard export) is supported if present, but is **not** part of the normal flow — dropping a CSV is manual and not required.
+Cursor’s local `state.vscdb` usually lacks a full per-request token split. For accurate in/out/cache numbers, export **Usage Events** from the Cursor dashboard and feed the CSV to Wingman.
 
-Priority when collecting:
+Resolution order (CLI, when Cursor is detected):
 
-1. `~/.cursor/usage-events*.csv` if present (full in/out/cache columns from Cursor’s export)
+1. `--cursor-usage-csv <path>` if provided
+2. Else a single `usage-events*.csv` in the **working directory** (announced to the user)
+3. Else if multiple `usage-events*.csv` in cwd → **fail** and ask the user to pass `--cursor-usage-csv` or delete unneeded files
+4. Else warn (with dashboard export steps) and fall back to `state.vscdb` estimates
+
+`~/.cursor/usage-events*.csv` is **not** scanned — that is not a conventional location for these exports.
+
+If a resolved CSV’s newest event date (UTC) is older than `--until` / today, Wingman warns that the export may be stale and points at https://cursor.com/dashboard/usage.
+
+Priority inside the Cursor adapter when collecting:
+
+1. Resolved usage-events CSV (full in/out/cache columns from Cursor’s export)
 2. Else non-zero `bubbleId` `tokenCount` rows from `state.vscdb` (rare on recent Cursor builds — usually `{0,0}`)
 3. Else each composer’s `promptTokenBreakdown.totalUsedTokens` / `contextTokensUsed`
 
@@ -78,7 +90,7 @@ Wingman’s breakdown means:
 
 **out ≠ write:** out is generated text; write is input-side cache bookkeeping.
 
-On the automated `state.vscdb` path, Cursor usually does not persist reliable per-request usage. The composer fallback is a **context-window snapshot** (system + tools + rules + conversation, etc.), mapped entirely to `input`, with `output` / `cacheRead` / `cacheWrite` left at `0`. That total undercounts cumulative billed usage and is not a full in/out/cache split. Accurate out/read/write exist on Cursor’s dashboard / usage CSV / API, not in the local DB fields we use by default.
+On the `state.vscdb` path (no CSV), Cursor usually does not persist reliable per-request usage. The composer fallback is a **context-window snapshot** (system + tools + rules + conversation, etc.), mapped entirely to `input`, with `output` / `cacheRead` / `cacheWrite` left at `0`. That total undercounts cumulative billed usage and is not a full in/out/cache split. Accurate out/read/write exist on Cursor’s dashboard / usage CSV / API, not in the local DB fields we use by default.
 
 ### Config inventory
 

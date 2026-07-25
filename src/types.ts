@@ -34,11 +34,17 @@ export interface InventoryItem {
   sources: string[];   // which agent adapters have this item
 }
 
+/** Optional knobs passed from the CLI into adapter.collect(). */
+export interface CollectOptions {
+  /** Path to a Cursor dashboard usage-events CSV export */
+  cursorUsageCsv?: string;
+}
+
 export interface AgentAdapter {
   name: string;
   displayName: string;
   detect(): Promise<boolean>;
-  collect(since: Date, until: Date): Promise<UsageRecord[]>;
+  collect(since: Date, until: Date, options?: CollectOptions): Promise<UsageRecord[]>;
   config(): Promise<AgentConfig>;
 }
 

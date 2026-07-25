@@ -155,18 +155,9 @@ describe("cursor adapter", () => {
       });
     });
 
-    it("parses usage-events CSV exports from ~/.cursor when present", async () => {
-      vi.mocked(existsSync).mockImplementation((path) => String(path).includes(".cursor"));
-      vi.mocked(readdirSync).mockImplementation(((path: string) => {
-        if (String(path).endsWith(".cursor") || String(path).includes("/.cursor")) {
-          // Only the top-level ~/.cursor listing matters for CSV discovery
-          if (!String(path).includes("plugins") && !String(path).includes("skills")) {
-            return ["usage-events-2026-06-11.csv"];
-          }
-        }
-        return [];
-      }) as unknown as typeof readdirSync);
-
+    it("parses an explicit usage-events CSV path when provided", async () => {
+      vi.mocked(existsSync).mockImplementation((path) => String(path).includes("state.vscdb"));
+      vi.mocked(readdirSync).mockReturnValue([]);
       vi.mocked(readFileSync).mockReturnValue(
         [
           "Date,Kind,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost",
@@ -176,7 +167,9 @@ describe("cursor adapter", () => {
       );
 
       const { default: adapter } = await import("../cursor.js");
-      const records = await adapter.collect(since, until);
+      const records = await adapter.collect(since, until, {
+        cursorUsageCsv: "/tmp/usage-events-2026-06-11.csv",
+      });
 
       expect(records).toHaveLength(1);
       expect(records[0]).toMatchObject({
@@ -190,6 +183,38 @@ describe("cursor adapter", () => {
           cacheWrite: 0,
         },
       });
+    });
+
+    it("lists usage-events*.csv files in a directory", async () => {
+      vi.mocked(existsSync).mockReturnValue(true);
+      vi.mocked(readdirSync).mockReturnValue([
+        "usage-events-2026-07-25.csv",
+        "readme.md",
+        "usage-events.csv",
+        "other.csv",
+      ] as unknown as ReturnType<typeof readdirSync>);
+
+      const { findUsageEventsCsvFiles } = await import("../cursor.js");
+      const files = findUsageEventsCsvFiles("/work");
+      expect(files.map((f) => f.replace(/\\/g, "/"))).toEqual([
+        "/work/usage-events-2026-07-25.csv",
+        "/work/usage-events.csv",
+      ]);
+    });
+
+    it("peeks the newest timestamp from a usage-events CSV", async () => {
+      vi.mocked(readFileSync).mockReturnValue(
+        [
+          "Date,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens",
+          '"2026-06-11T17:01:11.468Z","auto","0","1","1","1"',
+          '"2026-07-25T03:48:17.119Z","auto","0","1","1","1"',
+          '"2026-07-01T00:00:00.000Z","auto","0","1","1","1"',
+        ].join("\n"),
+      );
+
+      const { peekUsageEventsCsvNewest } = await import("../cursor.js");
+      const newest = peekUsageEventsCsvNewest("/tmp/usage-events.csv");
+      expect(newest?.toISOString()).toBe("2026-07-25T03:48:17.119Z");
     });
 
     it("filters out-of-range composer snapshots", async () => {

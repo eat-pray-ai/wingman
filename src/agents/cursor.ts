@@ -1,8 +1,8 @@
 import { homedir, platform } from "node:os";
-import { basename, join } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import Database from "better-sqlite3";
-import type { AgentAdapter, AgentConfig, PluginInfo, UsageRecord } from "../types.js";
+import type { AgentAdapter, AgentConfig, CollectOptions, PluginInfo, UsageRecord } from "../types.js";
 import { scanSkillDir } from "./skills.js";
 
 function getCursorUserDir(): string {
@@ -46,70 +46,98 @@ function sumTokens(tokens: UsageRecord["tokens"]): number {
   return tokens.input + tokens.output + (tokens.cacheRead ?? 0) + (tokens.cacheWrite ?? 0) + (tokens.reasoning ?? 0);
 }
 
-/** Parse Cursor dashboard usage-events CSV exports dropped into ~/.cursor/. */
-function collectFromUsageCsv(since: Date, until: Date): UsageRecord[] {
-  const records: UsageRecord[] = [];
-  if (!existsSync(CURSOR_DIR)) return records;
+const USAGE_EVENTS_CSV_RE = /^usage-events.*\.csv$/i;
 
-  let files: string[] = [];
+/** List `usage-events*.csv` files in a directory (absolute paths, sorted). */
+export function findUsageEventsCsvFiles(dir: string = process.cwd()): string[] {
+  if (!existsSync(dir)) return [];
   try {
-    files = readdirSync(CURSOR_DIR).filter(
-      (name) => name.startsWith("usage-events") && name.endsWith(".csv"),
-    );
+    return readdirSync(dir)
+      .filter((name) => USAGE_EVENTS_CSV_RE.test(name))
+      .sort()
+      .map((name) => resolve(dir, name));
   } catch {
-    return records;
+    return [];
   }
+}
 
-  for (const file of files) {
-    try {
-      const content = readFileSync(join(CURSOR_DIR, file), "utf-8");
-      const lines = content.split(/\r?\n/).filter((l) => l.trim());
-      if (lines.length < 2) continue;
+/** Newest event timestamp in a usage-events CSV, or null if none/unreadable. */
+export function peekUsageEventsCsvNewest(filePath: string): Date | null {
+  try {
+    const content = readFileSync(filePath, "utf-8");
+    const lines = content.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) return null;
 
-      const headers = parseCsvLine(lines[0]).map((h) => h.trim());
-      const idx = {
-        date: headers.findIndex((h) => /^date$/i.test(h)),
-        model: headers.findIndex((h) => /^model$/i.test(h)),
-        inputWithCache: headers.findIndex((h) => /input.*cache write/i.test(h)),
-        inputWithoutCache: headers.findIndex((h) => /input.*w\/o cache/i.test(h)),
-        cacheRead: headers.findIndex((h) => /cache read/i.test(h)),
-        output: headers.findIndex((h) => /output tokens/i.test(h)),
-      };
-      if (idx.date < 0 || idx.model < 0) continue;
+    const headers = parseCsvLine(lines[0]).map((h) => h.trim());
+    const dateIdx = headers.findIndex((h) => /^date$/i.test(h));
+    if (dateIdx < 0) return null;
 
-      for (const line of lines.slice(1)) {
-        try {
-          const cols = parseCsvLine(line);
-          const ts = parseTimestamp(cols[idx.date]);
-          if (!ts || ts < since || ts >= until) continue;
-
-          const model = (cols[idx.model] || "unknown").trim() || "unknown";
-          const cacheWrite = numCol(cols, idx.inputWithCache);
-          const input = numCol(cols, idx.inputWithoutCache);
-          const cacheRead = numCol(cols, idx.cacheRead);
-          const output = numCol(cols, idx.output);
-
-          records.push({
-            agent: "cursor",
-            model,
-            provider: "cursor",
-            timestamp: ts,
-            tokens: {
-              input,
-              output,
-              cacheRead,
-              cacheWrite,
-            },
-          });
-        } catch {
-          /* skip malformed rows */
-        }
+    let newest: Date | null = null;
+    for (const line of lines.slice(1)) {
+      try {
+        const ts = parseTimestamp(parseCsvLine(line)[dateIdx]);
+        if (!ts) continue;
+        if (!newest || ts > newest) newest = ts;
+      } catch {
+        /* skip malformed rows */
       }
-    } catch {
-      /* skip unreadable files */
     }
+    return newest;
+  } catch {
+    return null;
   }
+}
 
+/** Parse a Cursor dashboard usage-events CSV export into usage records. */
+export function parseUsageEventsCsv(filePath: string, since: Date, until: Date): UsageRecord[] {
+  const records: UsageRecord[] = [];
+  try {
+    const content = readFileSync(filePath, "utf-8");
+    const lines = content.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) return records;
+
+    const headers = parseCsvLine(lines[0]).map((h) => h.trim());
+    const idx = {
+      date: headers.findIndex((h) => /^date$/i.test(h)),
+      model: headers.findIndex((h) => /^model$/i.test(h)),
+      inputWithCache: headers.findIndex((h) => /input.*cache write/i.test(h)),
+      inputWithoutCache: headers.findIndex((h) => /input.*w\/o cache/i.test(h)),
+      cacheRead: headers.findIndex((h) => /cache read/i.test(h)),
+      output: headers.findIndex((h) => /output tokens/i.test(h)),
+    };
+    if (idx.date < 0 || idx.model < 0) return records;
+
+    for (const line of lines.slice(1)) {
+      try {
+        const cols = parseCsvLine(line);
+        const ts = parseTimestamp(cols[idx.date]);
+        if (!ts || ts < since || ts >= until) continue;
+
+        const model = (cols[idx.model] || "unknown").trim() || "unknown";
+        const cacheWrite = numCol(cols, idx.inputWithCache);
+        const input = numCol(cols, idx.inputWithoutCache);
+        const cacheRead = numCol(cols, idx.cacheRead);
+        const output = numCol(cols, idx.output);
+
+        records.push({
+          agent: "cursor",
+          model,
+          provider: "cursor",
+          timestamp: ts,
+          tokens: {
+            input,
+            output,
+            cacheRead,
+            cacheWrite,
+          },
+        });
+      } catch {
+        /* skip malformed rows */
+      }
+    }
+  } catch {
+    /* unreadable file */
+  }
   return records;
 }
 
@@ -405,13 +433,13 @@ export default {
     return existsSync(CURSOR_DIR) || existsSync(STATE_DB);
   },
 
-  async collect(since: Date, until: Date): Promise<UsageRecord[]> {
+  async collect(since: Date, until: Date, options?: CollectOptions): Promise<UsageRecord[]> {
     const records: UsageRecord[] = [];
     try {
-      // Prefer dashboard CSV exports when the user drops them into ~/.cursor/
-      const csvRecords = collectFromUsageCsv(since, until);
-      if (csvRecords.length > 0) {
-        return csvRecords;
+      // Prefer an explicit Cursor usage-events CSV (resolved by the CLI)
+      if (options?.cursorUsageCsv) {
+        const csvRecords = parseUsageEventsCsv(options.cursorUsageCsv, since, until);
+        if (csvRecords.length > 0) return csvRecords;
       }
 
       records.push(...collectFromStateDb(since, until));
