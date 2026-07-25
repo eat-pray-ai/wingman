@@ -10,6 +10,8 @@ Each file implements an `AgentAdapter` that reads local AI coding agent data.
 | `opencode.ts` | opencode | `~/.local/share/opencode/opencode.db` (SQLite) |
 | `gemini-cli.ts` | Gemini CLI | `~/.gemini/tmp/*/chats/session-*.json` (JSON) |
 | `codex.ts` | Codex | `~/.codex/state_5.sqlite` (SQLite) |
+| `github-copilot.ts` | GitHub Copilot | VS Code `workspaceStorage` chat sessions + `state.vscdb` |
+| `cursor.ts` | Cursor | `state.vscdb` bubbles/composers; optional `~/.cursor/usage-events*.csv` |
 | `registry.ts` | — | Imports all adapters, exports `getAllAdapters()` |
 | `skills.ts` | — | Shared skill directory scanner used by all adapters |
 
@@ -50,3 +52,13 @@ export default {
 - **Module-level constants**: `UPPER_SNAKE_CASE` for all file paths (e.g. `CLAUDE_DIR`, `DB_PATH`)
 - **Date filtering**: `collect()` receives `since`/`until` as `Date` objects — filter records to `[since, until)`
 - **Session tracking**: set `sessionId` on each `UsageRecord` for session-count aggregation
+
+## Cursor notes
+
+Cursor’s local `bubbleId` `tokenCount` fields are often zero. The adapter:
+
+1. Prefers `~/.cursor/usage-events*.csv` (dashboard exports) when present
+2. Else uses non-zero bubble tokens from `state.vscdb`
+3. Else falls back to each composer’s `promptTokenBreakdown.totalUsedTokens` / `contextTokensUsed` (context-window snapshot, not cumulative billed tokens)
+
+Config reads skills (`skills-cursor` / `skills`), plugins (`plugins/cache` + `local`), MCP (`mcp.json` + plugin `.mcp.json`), and models from `cli-config.json`.
