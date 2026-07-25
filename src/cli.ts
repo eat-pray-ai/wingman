@@ -45,10 +45,18 @@ function parseDateRange(opts: { since?: string; until?: string; days: number }) 
   return { since, until };
 }
 
+function parseAgentFilter(agents?: string): Set<string> | null {
+  return agents ? new Set(agents.split(",").map((s) => s.trim())) : null;
+}
+
+/** Cursor CSV resolve/warn when Cursor is on-device, or explicitly named in --agents. */
+function shouldHandleCursorCsv(agentsOpt: string | undefined, detected: AgentAdapter[]): boolean {
+  if (detected.some((a) => a.name === "cursor")) return true;
+  return parseAgentFilter(agentsOpt)?.has("cursor") ?? false;
+}
+
 async function detectAgents(agents?: string): Promise<AgentAdapter[]> {
-  const agentFilter = agents
-    ? new Set(agents.split(",").map((s) => s.trim()))
-    : null;
+  const agentFilter = parseAgentFilter(agents);
 
   let adapters = getAllAdapters();
   if (agentFilter) {
@@ -62,11 +70,6 @@ async function detectAgents(agents?: string): Promise<AgentAdapter[]> {
       detected.push(adapter);
       console.log(`  ✓ ${adapter.displayName}`);
     }
-  }
-
-  if (detected.length === 0) {
-    console.error("No AI agents detected on this machine.");
-    process.exit(1);
   }
 
   return detected;
@@ -92,18 +95,20 @@ function warnIfCursorUsageCsvStale(path: string, until: Date): void {
 }
 
 /**
- * Resolve a Cursor usage-events CSV path:
+ * Resolve a Cursor usage-events CSV path when Cursor is detected or
+ * explicitly requested via `--agents cursor`.
  * 1. `--cursor-usage-csv` if provided
  * 2. else a single `usage-events*.csv` in cwd (announce it)
  * 3. else fail when multiple matches exist
- * 4. else warn that local DB estimates undercount / lack out/read/write
+ * 4. else warn about local DB undercount and recommend the dashboard CSV
  */
 function resolveCursorUsageCsv(
   explicitPath: string | undefined,
-  cursorDetected: boolean,
+  handleCursor: boolean,
   until: Date,
 ): string | undefined {
-  if (!cursorDetected) return undefined;
+  // Skip when Cursor is neither on-device nor named in --agents.
+  if (!handleCursor) return undefined;
 
   if (explicitPath) {
     const path = resolve(explicitPath);
@@ -136,20 +141,20 @@ function resolveCursorUsageCsv(
     "⚠ No usage-events*.csv in the working directory (and --cursor-usage-csv not set).",
   );
   console.warn(
-    "  Cursor local DB usually lacks a full token split — cards often show N in / 0 out / 0 read / 0 write",
+    "  Falling back to local state.vscdb estimates. These are usually much smaller and inaccurate:",
   );
   console.warn(
-    "  (context-size snapshot only). For accurate numbers:",
+    "  each chat contributes only a latest context-window snapshot (not cumulative billed usage),",
   );
   console.warn(
-    `  1. Open ${CURSOR_USAGE_DASHBOARD_URL}`,
+    "  with no in/out/read/write split — the whole snapshot is put into `in` (out/read/write stay 0).",
   );
   console.warn(
-    "  2. Click Export CSV (usage-events-*.csv)",
+    "  Strongly recommended: download a usage-events CSV for accurate totals.",
   );
-  console.warn(
-    "  3. Place it in the cwd, or pass --cursor-usage-csv <path>",
-  );
+  console.warn(`  1. Open ${CURSOR_USAGE_DASHBOARD_URL}`);
+  console.warn("  2. Click Export CSV (usage-events-*.csv)");
+  console.warn("  3. Place it in the cwd, or pass --cursor-usage-csv <path>");
   return undefined;
 }
 
@@ -234,9 +239,13 @@ program
     const detected = await detectAgents(opts.agents);
     const cursorUsageCsv = resolveCursorUsageCsv(
       opts.cursorUsageCsv,
-      detected.some((a) => a.name === "cursor"),
+      shouldHandleCursorCsv(opts.agents, detected),
       until,
     );
+    if (detected.length === 0) {
+      console.error("No AI agents detected on this machine.");
+      process.exit(1);
+    }
     const data = await collectAndAggregate(detected, since, until, { cursorUsageCsv });
 
     console.log("🎨 Rendering SVG...");
@@ -263,9 +272,13 @@ program
     const detected = await detectAgents(opts.agents);
     const cursorUsageCsv = resolveCursorUsageCsv(
       opts.cursorUsageCsv,
-      detected.some((a) => a.name === "cursor"),
+      shouldHandleCursorCsv(opts.agents, detected),
       until,
     );
+    if (detected.length === 0) {
+      console.error("No AI agents detected on this machine.");
+      process.exit(1);
+    }
     const data = await collectAndAggregate(detected, since, until, { cursorUsageCsv });
 
     console.log("📋 Loading model metadata...");

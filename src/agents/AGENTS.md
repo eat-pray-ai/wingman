@@ -60,16 +60,16 @@ export default {
 
 Cursor’s local `state.vscdb` usually lacks a full per-request token split. For accurate in/out/cache numbers, export **Usage Events** from the Cursor dashboard and feed the CSV to Wingman.
 
-Resolution order (CLI, when Cursor is detected):
+Resolution order (CLI, when Cursor is **detected** on the device **or** named in `--agents` — no CSV warnings otherwise):
 
 1. `--cursor-usage-csv <path>` if provided
 2. Else a single `usage-events*.csv` in the **working directory** (announced to the user)
 3. Else if multiple `usage-events*.csv` in cwd → **fail** and ask the user to pass `--cursor-usage-csv` or delete unneeded files
-4. Else warn (with dashboard export steps) and fall back to `state.vscdb` estimates
+4. Else **warn** and fall back to `state.vscdb` estimates. The warning explains that local figures are usually much smaller/inaccurate (per-chat context snapshots, not cumulative billed usage), that the whole snapshot is mapped to `in` with `out`/`read`/`write` left at 0, and **strongly recommends** exporting a CSV from https://cursor.com/dashboard/usage.
 
 `~/.cursor/usage-events*.csv` is **not** scanned — that is not a conventional location for these exports.
 
-If a resolved CSV’s newest event date (UTC) is older than `--until` / today, Wingman warns that the export may be stale and points at https://cursor.com/dashboard/usage.
+If a resolved CSV’s newest event date (UTC) is older than `--until` / today, Wingman warns that the export may be stale and points at the same dashboard URL.
 
 Priority inside the Cursor adapter when collecting:
 
@@ -90,7 +90,7 @@ Wingman’s breakdown means:
 
 **out ≠ write:** out is generated text; write is input-side cache bookkeeping.
 
-On the `state.vscdb` path (no CSV), Cursor usually does not persist reliable per-request usage. The composer fallback is a **context-window snapshot** (system + tools + rules + conversation, etc.), mapped entirely to `input`, with `output` / `cacheRead` / `cacheWrite` left at `0`. That total undercounts cumulative billed usage and is not a full in/out/cache split. Accurate out/read/write exist on Cursor’s dashboard / usage CSV / API, not in the local DB fields we use by default.
+On the `state.vscdb` path (no CSV), Cursor usually does not persist reliable per-request usage. The composer fallback is a **context-window snapshot** (system + tools + rules + conversation, etc.) — not a sum of billed request tokens — mapped entirely to `input`, with `output` / `cacheRead` / `cacheWrite` left at `0`. Totals are often much smaller than dashboard/CSV figures and cannot be split into in/out/read/write. Prefer the usage-events CSV whenever Cursor is in use.
 
 ### Config inventory
 
