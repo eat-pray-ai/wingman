@@ -176,6 +176,7 @@ describe("cursor adapter", () => {
         agent: "cursor",
         model: "auto",
         provider: "cursor",
+        sessionId: "csv:2026-06-11",
         tokens: {
           input: 55_507,
           output: 18_613,
@@ -215,32 +216,6 @@ describe("cursor adapter", () => {
       const { peekUsageEventsCsvNewest } = await import("../cursor.js");
       const newest = peekUsageEventsCsvNewest("/tmp/usage-events.csv");
       expect(newest?.toISOString()).toBe("2026-07-25T03:48:17.119Z");
-    });
-
-    it("uses CSV path from prepareCursorUsageCsv when collect has no options", async () => {
-      vi.mocked(existsSync).mockImplementation((path) => {
-        const p = String(path);
-        return p.includes("usage-events") || p.includes("state.vscdb");
-      });
-      vi.mocked(readdirSync).mockReturnValue([]);
-      vi.mocked(readFileSync).mockReturnValue(
-        [
-          "Date,Kind,Model,Input (w/ Cache Write),Input (w/o Cache Write),Cache Read,Output Tokens,Total Tokens,Cost",
-          '"2026-06-11T17:01:11.468Z","Included","auto","0","55507","676928","18613","751048","Included"',
-        ].join("\n"),
-      );
-
-      const { default: adapter, prepareCursorUsageCsv } = await import("../cursor.js");
-      const until = new Date("2026-07-01T00:00:00Z");
-      prepareCursorUsageCsv({
-        explicitPath: "/tmp/usage-events-prepared.csv",
-        cursorDetected: true,
-        until,
-      });
-
-      const records = await adapter.collect(since, until);
-      expect(records).toHaveLength(1);
-      expect(records[0].tokens.input).toBe(55_507);
     });
 
     it("filters out-of-range composer snapshots", async () => {
@@ -332,22 +307,17 @@ describe("cursor adapter", () => {
       logSpy.mockRestore();
     });
 
-    it("fails when multiple usage-events CSV files exist in cwd", async () => {
+    it("throws when multiple usage-events CSV files exist in cwd", async () => {
       vi.mocked(existsSync).mockReturnValue(true);
       vi.mocked(readdirSync).mockReturnValue([
         "usage-events-a.csv",
         "usage-events-b.csv",
       ] as unknown as ReturnType<typeof readdirSync>);
-      const exitSpy = vi.spyOn(process, "exit").mockImplementation(((code?: number) => {
-        throw new Error(`exit:${code}`);
-      }) as never);
-      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       const { prepareCursorUsageCsv } = await import("../cursor.js");
 
-      expect(() => prepareCursorUsageCsv({ cursorDetected: true, until })).toThrow("exit:1");
-      expect(errorSpy.mock.calls.some((c) => String(c[0]).includes("Multiple Cursor usage-events"))).toBe(true);
-      exitSpy.mockRestore();
-      errorSpy.mockRestore();
+      expect(() => prepareCursorUsageCsv({ cursorDetected: true, until })).toThrow(
+        /Multiple Cursor usage-events/,
+      );
     });
   });
 

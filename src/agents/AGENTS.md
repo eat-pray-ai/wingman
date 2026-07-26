@@ -55,27 +55,13 @@ export default {
 
 ## Cursor notes
 
-### Recommended: usage-events CSV
+Cursor does not persist reliable per-request token totals locally. Prefer a dashboard export from https://cursor.com/dashboard/usage.
 
-Cursor does not persist reliable per-request token totals in local storage. For accurate in/out/cache numbers, export **Usage Events** from https://cursor.com/dashboard/usage and feed the CSV to Wingman. Local `state.vscdb` is only a fallback.
+CLI resolution (`prepareCursorUsageCsv()`, when Cursor is detected or named in `--agents`):
 
-Resolution lives in `prepareCursorUsageCsv()` in `cursor.ts` (CLI calls it after detect; when Cursor is **detected** or named in `--agents` — no CSV warnings otherwise):
+1. `--cursor-usage-csv <path>`
+2. Else a single `usage-events*.csv` in the working directory
+3. Else multiple matches → fail (pass `--cursor-usage-csv` or delete extras)
+4. Else warn and fall back to `state.vscdb` (context-window snapshots, not billed usage)
 
-1. `--cursor-usage-csv <path>` if provided
-2. Else a single `usage-events*.csv` in the **working directory** (announced to the user)
-3. Else if multiple `usage-events*.csv` in cwd → **fail** and ask the user to pass `--cursor-usage-csv` or delete unneeded files
-4. Else **warn** and fall back to `state.vscdb`. The warning explains that local figures are usually much smaller/inaccurate (per-chat context snapshots, not cumulative billed usage), that the whole snapshot is mapped to `in` with `out`/`read`/`write` left at 0, and **strongly recommends** the dashboard CSV.
-
-`~/.cursor/usage-events*.csv` is **not** scanned — that is not a conventional location for these exports.
-
-If a resolved CSV’s newest event date (UTC) is older than `--until` / today, Wingman warns that the export may be stale.
-
-Adapter collect priority:
-
-1. Resolved usage-events CSV (full in/out/cache columns)
-2. Else non-zero `bubbleId` `tokenCount` rows from `state.vscdb` (rare — usually `{0,0}`)
-3. Else each composer’s `promptTokenBreakdown.totalUsedTokens` / `contextTokensUsed` (context-window snapshot → `input` only)
-
-### Config inventory
-
-Config reads skills (`skills-cursor` / `skills`), plugins (`plugins/cache` + `local`), MCP (`mcp.json` + plugin `.mcp.json`), and models from `cli-config.json`.
+CSV rows have no chat id; `sessionId` is synthesized as `csv:YYYY-MM-DD` (UTC) for session-count aggregation.

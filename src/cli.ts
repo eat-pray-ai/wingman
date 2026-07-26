@@ -68,10 +68,37 @@ async function detectAgents(agents?: string): Promise<AgentAdapter[]> {
   return detected;
 }
 
+/** Detect agents, resolve Cursor CSV, and exit if nothing usable was found. */
+async function prepareAndRequireAgents(opts: {
+  agents?: string;
+  cursorUsageCsv?: string;
+  until: Date;
+}): Promise<{ detected: AgentAdapter[]; cursorUsageCsv?: string }> {
+  const detected = await detectAgents(opts.agents);
+  let cursorUsageCsv: string | undefined;
+  try {
+    cursorUsageCsv = prepareCursorUsageCsv({
+      explicitPath: opts.cursorUsageCsv,
+      agents: opts.agents,
+      cursorDetected: detected.some((a) => a.name === "cursor"),
+      until: opts.until,
+    });
+  } catch (err) {
+    console.error((err as Error).message);
+    process.exit(1);
+  }
+  if (detected.length === 0) {
+    console.error("No AI agents detected on this machine.");
+    process.exit(1);
+  }
+  return { detected, cursorUsageCsv };
+}
+
 async function collectAndAggregate(
   detected: AgentAdapter[],
   since: Date,
   until: Date,
+  cursorUsageCsv?: string,
 ): Promise<ShowcaseData> {
   console.log("\n📊 Collecting usage data...");
   const allRecords: UsageRecord[] = [];
@@ -80,7 +107,17 @@ async function collectAndAggregate(
 
   for (const adapter of detected) {
     try {
-      const records = await adapter.collect(since, until);
+      // Cursor accepts an optional third arg; other adapters ignore it via 2-arg collect.
+      const collect = adapter.collect as (
+        since: Date,
+        until: Date,
+        options?: { cursorUsageCsv?: string },
+      ) => Promise<UsageRecord[]>;
+      const records = await collect(
+        since,
+        until,
+        adapter.name === "cursor" ? { cursorUsageCsv } : undefined,
+      );
       for (const r of records) allRecords.push(r);
       const config = await adapter.config();
       configsMap.set(adapter.name, { displayName: adapter.displayName, config });
@@ -140,18 +177,12 @@ program
       }
     }
 
-    const detected = await detectAgents(opts.agents);
-    prepareCursorUsageCsv({
-      explicitPath: opts.cursorUsageCsv,
+    const { detected, cursorUsageCsv } = await prepareAndRequireAgents({
       agents: opts.agents,
-      cursorDetected: detected.some((a) => a.name === "cursor"),
+      cursorUsageCsv: opts.cursorUsageCsv,
       until,
     });
-    if (detected.length === 0) {
-      console.error("No AI agents detected on this machine.");
-      process.exit(1);
-    }
-    const data = await collectAndAggregate(detected, since, until);
+    const data = await collectAndAggregate(detected, since, until, cursorUsageCsv);
 
     console.log("🎨 Rendering SVG...");
     const svg = theme.render(data, { sections: sectionsFilter });
@@ -174,18 +205,12 @@ program
   .option(...CURSOR_USAGE_CSV_OPTION)
   .action(async (opts) => {
     const { since, until } = parseDateRange(opts);
-    const detected = await detectAgents(opts.agents);
-    prepareCursorUsageCsv({
-      explicitPath: opts.cursorUsageCsv,
+    const { detected, cursorUsageCsv } = await prepareAndRequireAgents({
       agents: opts.agents,
-      cursorDetected: detected.some((a) => a.name === "cursor"),
+      cursorUsageCsv: opts.cursorUsageCsv,
       until,
     });
-    if (detected.length === 0) {
-      console.error("No AI agents detected on this machine.");
-      process.exit(1);
-    }
-    const data = await collectAndAggregate(detected, since, until);
+    const data = await collectAndAggregate(detected, since, until, cursorUsageCsv);
 
     console.log("📋 Loading model metadata...");
     const modelInfo = await fetchModelInfo();
