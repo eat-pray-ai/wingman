@@ -70,8 +70,8 @@ export default {
           }
         }
       }
-    } catch {
-      // return what we have
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message.includes("NODE_MODULE_VERSION")) throw err;
     }
     return records;
   },

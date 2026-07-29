@@ -123,7 +123,12 @@ async function collectAndAggregate(
       configsMap.set(adapter.name, { displayName: adapter.displayName, config });
       console.log(`  ${adapter.displayName}: ${records.length} records`);
     } catch (err) {
-      console.warn(`  ⚠ ${adapter.displayName}: ${(err as Error).message}`);
+      const msg = (err as Error).message ?? String(err);
+      if (msg.includes("NODE_MODULE_VERSION")) {
+        console.warn(`  ⚠ ${adapter.displayName}: native module was built for a different Node.js version. Fix: npm cache npx rm @eat-pray-ai/wingman`);
+      } else {
+        console.warn(`  ⚠ ${adapter.displayName}: ${msg}`);
+      }
     }
   }
 
