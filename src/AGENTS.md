@@ -25,7 +25,7 @@ Two commands share the same pipeline up to `ShowcaseData`:
 
 | Directory | Guide | Purpose |
 |---|---|---|
-| `agents/` | [AGENTS.md](agents/AGENTS.md) | One adapter per AI agent (Claude Code, opencode, Gemini CLI, Codex) |
+| `agents/` | [AGENTS.md](agents/AGENTS.md) | One adapter per AI agent (Claude Code, opencode, Gemini CLI, Codex, GitHub Copilot, Cursor) |
 | `themes/` | [AGENTS.md](themes/AGENTS.md) | Theme renderers — converts `ShowcaseData` → SVG string |
 | `svg/` | [AGENTS.md](svg/AGENTS.md) | Reusable SVG primitives (text, rect, sparkline, donut, pill) |
 | `pricing/` | [AGENTS.md](pricing/AGENTS.md) | Model cost resolution and metadata via models.dev API |

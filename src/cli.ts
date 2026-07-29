@@ -3,13 +3,20 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getAllAdapters } from "./agents/registry.js";
+import { CURSOR_USAGE_CSV_OPTION, prepareCursorUsageCsv } from "./agents/cursor.js";
 import { createPricingEngine } from "./pricing/engine.js";
 import { aggregate } from "./aggregator.js";
 import { getTheme, getAvailableThemes } from "./themes/registry.js";
 import { SECTION_NAMES } from "./themes/shared/sections.js";
 import { generateResumeYaml } from "./resume/renderer.js";
 import { fetchModelInfo } from "./pricing/models-dev.js";
-import type { AgentAdapter, UsageRecord, AgentConfig, ShowcaseData, ModelPricing } from "./types.js";
+import type {
+  AgentAdapter,
+  UsageRecord,
+  AgentConfig,
+  ShowcaseData,
+  ModelPricing,
+} from "./types.js";
 
 function findPackageJson(): string {
   let dir = dirname(fileURLToPath(import.meta.url));
@@ -37,10 +44,12 @@ function parseDateRange(opts: { since?: string; until?: string; days: number }) 
   return { since, until };
 }
 
+function parseAgentFilter(agents?: string): Set<string> | null {
+  return agents ? new Set(agents.split(",").map((s) => s.trim())) : null;
+}
+
 async function detectAgents(agents?: string): Promise<AgentAdapter[]> {
-  const agentFilter = agents
-    ? new Set(agents.split(",").map((s) => s.trim()))
-    : null;
+  const agentFilter = parseAgentFilter(agents);
 
   let adapters = getAllAdapters();
   if (agentFilter) {
@@ -56,18 +65,40 @@ async function detectAgents(agents?: string): Promise<AgentAdapter[]> {
     }
   }
 
+  return detected;
+}
+
+/** Detect agents, resolve Cursor CSV, and exit if nothing usable was found. */
+async function prepareAndRequireAgents(opts: {
+  agents?: string;
+  cursorUsageCsv?: string;
+  until: Date;
+}): Promise<{ detected: AgentAdapter[]; cursorUsageCsv?: string }> {
+  const detected = await detectAgents(opts.agents);
+  let cursorUsageCsv: string | undefined;
+  try {
+    cursorUsageCsv = prepareCursorUsageCsv({
+      explicitPath: opts.cursorUsageCsv,
+      agents: opts.agents,
+      cursorDetected: detected.some((a) => a.name === "cursor"),
+      until: opts.until,
+    });
+  } catch (err) {
+    console.error((err as Error).message);
+    process.exit(1);
+  }
   if (detected.length === 0) {
     console.error("No AI agents detected on this machine.");
     process.exit(1);
   }
-
-  return detected;
+  return { detected, cursorUsageCsv };
 }
 
 async function collectAndAggregate(
   detected: AgentAdapter[],
   since: Date,
   until: Date,
+  cursorUsageCsv?: string,
 ): Promise<ShowcaseData> {
   console.log("\n📊 Collecting usage data...");
   const allRecords: UsageRecord[] = [];
@@ -76,7 +107,17 @@ async function collectAndAggregate(
 
   for (const adapter of detected) {
     try {
-      const records = await adapter.collect(since, until);
+      // Cursor accepts an optional third arg; other adapters ignore it via 2-arg collect.
+      const collect = adapter.collect as (
+        since: Date,
+        until: Date,
+        options?: { cursorUsageCsv?: string },
+      ) => Promise<UsageRecord[]>;
+      const records = await collect(
+        since,
+        until,
+        adapter.name === "cursor" ? { cursorUsageCsv } : undefined,
+      );
       for (const r of records) allRecords.push(r);
       const config = await adapter.config();
       configsMap.set(adapter.name, { displayName: adapter.displayName, config });
@@ -110,6 +151,7 @@ program
   .option("--until <date>", "end date (YYYY-MM-DD)")
   .option("--days <n>", "last N days", parseIntArg, 90)
   .option("--sections <names>", `comma-separated sections to include (${SECTION_NAMES.join(", ")})`)
+  .option(...CURSOR_USAGE_CSV_OPTION)
   .action(async (opts) => {
     const { since, until } = parseDateRange(opts);
 
@@ -135,8 +177,12 @@ program
       }
     }
 
-    const detected = await detectAgents(opts.agents);
-    const data = await collectAndAggregate(detected, since, until);
+    const { detected, cursorUsageCsv } = await prepareAndRequireAgents({
+      agents: opts.agents,
+      cursorUsageCsv: opts.cursorUsageCsv,
+      until,
+    });
+    const data = await collectAndAggregate(detected, since, until, cursorUsageCsv);
 
     console.log("🎨 Rendering SVG...");
     const svg = theme.render(data, { sections: sectionsFilter });
@@ -156,10 +202,15 @@ program
   .option("--since <date>", "start date (YYYY-MM-DD)")
   .option("--until <date>", "end date (YYYY-MM-DD)")
   .option("--days <n>", "last N days", parseIntArg, 180)
+  .option(...CURSOR_USAGE_CSV_OPTION)
   .action(async (opts) => {
     const { since, until } = parseDateRange(opts);
-    const detected = await detectAgents(opts.agents);
-    const data = await collectAndAggregate(detected, since, until);
+    const { detected, cursorUsageCsv } = await prepareAndRequireAgents({
+      agents: opts.agents,
+      cursorUsageCsv: opts.cursorUsageCsv,
+      until,
+    });
+    const data = await collectAndAggregate(detected, since, until, cursorUsageCsv);
 
     console.log("📋 Loading model metadata...");
     const modelInfo = await fetchModelInfo();
